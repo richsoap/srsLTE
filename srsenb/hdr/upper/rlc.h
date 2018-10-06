@@ -24,7 +24,12 @@
  *
  */
 
+// we assume that every lcid called from rrc is vaild.
+
+// though this file is name 'rlc.h', this is not stardand rlc interface
+
 #include <map>
+#include <queue>
 #include "srslte/interfaces/ue_interfaces.h"
 #include "srslte/interfaces/enb_interfaces.h"
 #include "srslte/upper/rlc.h"
@@ -32,81 +37,88 @@
 #ifndef SRSENB_RLC_H
 #define SRSENB_RLC_H
 
-typedef struct {
-    uint32_t lcid;
-    uint32_t plmn;
-    uint16_t mtch_stop;
-    uint8_t *payload;
-}mch_service_t;
+#define SRSENB_RLC_BUFFER_SIZE
+
+#define SDU_TYPE_NORMAL 0xff00
+#define SDU_TYPE_RETRNTI 0xff01
+#define SDU_TYPE_UPDRNTI 0xff02
+#define SDU_TYPE_ABORNTI 0xff03
+
+#define PDU_TYPE_NORMAL 0xee00
+#define PDU_TYPE_ASKRNTI 0xee01
+#define PDU_TYPE_ABORNTI 0xee02
 
 namespace srsenb {
   
-class rlc :  public rlc_interface_mac, 
-             public rlc_interface_rrc, 
+class rlc :  public rlc_interface_rrc, 
              public rlc_interface_pdcp
 {
 public:
  
-  void init(pdcp_interface_rlc *pdcp_, rrc_interface_rlc *rrc_, mac_interface_rlc *mac_, 
-            srslte::mac_interface_timers *mac_timers_, srslte::log *log_h);
-  void stop(); 
+  void init(pdcp_interface_rlc *pdcp_, rrc_interface_rlc *rrc_, srslte::log *log_h); 
+  // did not get socket
+  // did not malloc buffer
+  void stop(); //
   
   // rlc_interface_rrc
-  void clear_buffer(uint16_t rnti);
-  void add_user(uint16_t rnti); 
-  void rem_user(uint16_t rnti);
-  void add_bearer(uint16_t rnti, uint32_t lcid);
-  void add_bearer(uint16_t rnti, uint32_t lcid, srslte::srslte_rlc_config_t cnfg);
-  void add_bearer_mrb(uint16_t rnti, uint32_t lcid);
+  void clear_buffer(uint16_t rnti);//
+  void add_user(uint16_t rnti); //
+  void rem_user(uint16_t rnti);//
+  void add_bearer(uint16_t rnti, uint32_t lcid);//
+  void add_bearer(uint16_t rnti, uint32_t lcid, srslte::srslte_rlc_config_t cnfg);//
+  void add_bearer_mrb(uint16_t rnti, uint32_t lcid);//
 
   // rlc_interface_pdcp
-  void write_sdu(uint16_t rnti, uint32_t lcid, srslte::byte_buffer_t *sdu);
-  bool rb_is_um(uint16_t rnti, uint32_t lcid);
-  std::string get_rb_name(uint32_t lcid);
-  
-  // rlc_interface_mac
-  int  read_pdu(uint16_t rnti, uint32_t lcid, uint8_t *payload, uint32_t nof_bytes);
-  void read_pdu_bcch_dlsch(uint32_t sib_index, uint8_t *payload);
-  void write_pdu(uint16_t rnti, uint32_t lcid, uint8_t *payload, uint32_t nof_bytes);
-  void read_pdu_pcch(uint8_t *payload, uint32_t buffer_size); 
+  void write_sdu(uint16_t rnti, uint32_t lcid, srslte::byte_buffer_t *sdu); //
+  void add_sdu(sdu_t _sdu);
+  std::string get_rb_name(uint32_t lcid); //
   
 private: 
+
+  const static int BUFFER_SIZE = 65536;
+
+  struct {
+    uint16_t rnti;
+    uint32_t lcid;
+    srslet::byte_buffer_t *sdu;
+    uint16_t sdu_type;
+    sdu_t(uint16_t _rnti = 0, uint32_t _lcid = 0, srslte::byte_buffer_t * _sdu = 0, uint16_t _sdu_type):
+        rnti(_rnti),lcid(_lcid),sdu(_sdu),sdu_type(_sdu_type) {}
+  } sdu_t;
   
-  class user_interface : public srsue::pdcp_interface_rlc, 
-                         public srsue::rrc_interface_rlc, 
-                         public srsue::ue_interface
-  {
-  public: 
-    void write_pdu(uint32_t lcid, srslte::byte_buffer_t *sdu);
-    void write_pdu_bcch_bch(srslte::byte_buffer_t *sdu);
-    void write_pdu_bcch_dlsch(srslte::byte_buffer_t *sdu);
-    void write_pdu_pcch(srslte::byte_buffer_t *sdu);
-    void write_pdu_mch(uint32_t lcid, srslte::byte_buffer_t *sdu){}
-    void max_retx_attempted(); 
-    std::string get_rb_name(uint32_t lcid);
-    uint16_t rnti; 
+  void write_pdu(uint16_t rnti, uint32_t lcid, srslte::byte_buffer_t *sdu); //
 
-    srsenb::pdcp_interface_rlc *pdcp; 
-    srsenb::rrc_interface_rlc  *rrc;
-    srslte::rlc                *rlc; 
-    srsenb::rlc                *parent; 
-  };
+  void* receive_loop();
+  void* send_loop();
 
-  void clear_user(user_interface *ue);
+  // some functions for send and receive loop
+ int comb_normal(sdu_t& payload);
+ int comb_ret(sdu_t& payload);
+ int comb_upd(sdu_t& payload);
+ int comb_abo(sdu_t& payload);
 
-  const static int RLC_TX_QUEUE_LEN = 512;
+ void handle_normal(ssize_t len);
+ void handle_ask(ssize_t len);
+ void handle_abo(ssize_t len);
 
-  pthread_rwlock_t rwlock;
 
-  std::map<uint32_t,user_interface> users; 
-  std::vector<mch_service_t> mch_services;
-  
-  mac_interface_rlc             *mac; 
+  pthread_rwlock_t quelock;
+  pthread_rwlock_t maplock;
+  pthread_cond_t cond;
+  pthread_t receive_tid;
+  pthread_t send_tid;
+
+  std::map<uint32_t, sockaddr_in> users; 
+  std::queue<sdu_t> sdu_queue;
+
   pdcp_interface_rlc            *pdcp;
   rrc_interface_rlc             *rrc;
   srslte::log                   *log_h; 
   srslte::byte_buffer_pool      *pool;
-  srslte::mac_interface_timers  *mac_timers;
+
+  uint8_t receive_buffer[SRSENB_RLC_BUFFER_SIZE];
+  uint8_t send_buffer[SRSENB_RLC_BUFFER_SIZE];
+  int sock_fd;
 };
 
 }

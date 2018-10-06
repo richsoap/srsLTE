@@ -133,7 +133,10 @@ bool enb::init(all_args_t *args_)
   }
   
   // Init layers
-  
+ // change phy to udp or tcp
+ // from here
+ //
+ //
   /* Start Radio */
   char *dev_name = NULL;
   if (args->rf.device_name.compare("auto")) {
@@ -225,7 +228,8 @@ bool enb::init(all_args_t *args_)
 
   rrc_cfg.inactivity_timeout_ms = args->expert.rrc_inactivity_timer;
   rrc_cfg.enable_mbsfn =  args->expert.enable_mbsfn;
-  
+ // end here
+
   // Copy cell struct to rrc and phy 
   memcpy(&rrc_cfg.cell, &cell_cfg, sizeof(srslte_cell_t));
   memcpy(&phy_cfg.cell, &cell_cfg, sizeof(srslte_cell_t));

@@ -185,16 +185,16 @@ void pdcp::write_pdu(uint32_t lcid, byte_buffer_t *pdu)
 void pdcp::write_pdu_bcch_bch(byte_buffer_t *sdu)
 {
   rrc->write_pdu_bcch_bch(sdu);
-}
+}// 广播控制信道
 void pdcp::write_pdu_bcch_dlsch(byte_buffer_t *sdu)
 {
   rrc->write_pdu_bcch_dlsch(sdu);
-}
+}// 下行共享信道
 
 void pdcp::write_pdu_pcch(byte_buffer_t *sdu)
 {
   rrc->write_pdu_pcch(sdu);
-}
+}// 寻呼控制信道
 
 void pdcp::write_pdu_mch(uint32_t lcid, byte_buffer_t *sdu)
 {
@@ -203,7 +203,7 @@ void pdcp::write_pdu_mch(uint32_t lcid, byte_buffer_t *sdu)
   } else {
     gw->write_pdu_mch(lcid, sdu);
   }
-}
+}//
 
 /*******************************************************************************
   Helpers
