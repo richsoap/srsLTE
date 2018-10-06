@@ -23,8 +23,8 @@
 ########################################################################
 add_subdirectory(src)
 add_subdirectory(include)
-add_subdirectory(examples)
-add_subdirectory(test)
+#add_subdirectory(examples)
+#add_subdirectory(test)
 
 ########################################################################
 # Install library headers

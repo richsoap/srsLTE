@@ -308,7 +308,7 @@ ENABLE_SRSENB:BOOL=ON
 ENABLE_SRSEPC:BOOL=ON
 
 //Build srsUE application
-ENABLE_SRSUE:BOOL=ON
+ENABLE_SRSUE:BOOL=OFF
 
 //Enable compile-time SSE4.1 support.
 ENABLE_SSE:BOOL=ON
@@ -453,19 +453,7 @@ srslte_asn1_LIB_DEPENDS:STATIC=
 srslte_common_LIB_DEPENDS:STATIC=general;/usr/lib/x86_64-linux-gnu/libmbedcrypto.so;
 
 //Dependencies for the target
-srslte_phy_LIB_DEPENDS:STATIC=general;pthread;general;m;
-
-//Dependencies for the target
 srslte_upper_LIB_DEPENDS:STATIC=general;srslte_common;general;srslte_asn1;
-
-//Dependencies for target
-srsue_mac_LIB_DEPENDS:STATIC=
-
-//Dependencies for target
-srsue_phy_LIB_DEPENDS:STATIC=
-
-//Dependencies for target
-srsue_upper_LIB_DEPENDS:STATIC=
 
 
 ########################
@@ -614,7 +602,7 @@ CMAKE_MODULE_LINKER_FLAGS_RELWITHDEBINFO-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: CMAKE_NM
 CMAKE_NM-ADVANCED:INTERNAL=1
 //number of local generators
-CMAKE_NUMBER_OF_MAKEFILES:INTERNAL=62
+CMAKE_NUMBER_OF_MAKEFILES:INTERNAL=17
 //ADVANCED property for variable: CMAKE_OBJCOPY
 CMAKE_OBJCOPY-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: CMAKE_OBJDUMP

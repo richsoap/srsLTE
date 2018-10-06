@@ -30,7 +30,6 @@
 
 #include <map>
 #include <queue>
-#include "srslte/interfaces/ue_interfaces.h"
 #include "srslte/interfaces/enb_interfaces.h"
 #include "srslte/upper/rlc.h"
 
@@ -49,13 +48,22 @@
 #define PDU_TYPE_ABORNTI 0xee02
 
 namespace srsenb {
-  
+struct sdu_t{
+    uint16_t rnti;
+    uint32_t lcid;
+    srslte::byte_buffer_t *sdu;
+    uint16_t sdu_type;
+    sdu_t(uint16_t _rnti = 0, uint32_t _lcid = 0, srslte::byte_buffer_t * _sdu = 0, uint16_t _sdu_type = 0):
+        rnti(_rnti),lcid(_lcid),sdu(_sdu),sdu_type(_sdu_type) {}
+};
+ 
+
 class rlc :  public rlc_interface_rrc, 
              public rlc_interface_pdcp
 {
 public:
  
-  void init(pdcp_interface_rlc *pdcp_, rrc_interface_rlc *rrc_, srslte::log *log_h); 
+   void init(pdcp_interface_rlc *pdcp_, rrc_interface_rlc *rrc_, srslte::log *log_h); 
   // did not get socket
   // did not malloc buffer
   void stop(); //
@@ -70,37 +78,36 @@ public:
 
   // rlc_interface_pdcp
   void write_sdu(uint16_t rnti, uint32_t lcid, srslte::byte_buffer_t *sdu); //
-  void add_sdu(sdu_t _sdu);
   std::string get_rb_name(uint32_t lcid); //
+
+  // some functions for send loop and recv loop
+  bool is_queue_empty();
+  sdu_t read_sdu();
+  bool get_addr(uint16_t rnti, sockaddr* addr);
   
-private: 
+  srslte::log                   *log_h; 
+  srslte::byte_buffer_pool      *pool;
+
+  uint8_t receive_buffer[SRSENB_RLC_BUFFER_SIZE];
+  uint8_t send_buffer[SRSENB_RLC_BUFFER_SIZE];
+  int sock_fd;
 
   const static int BUFFER_SIZE = 65536;
+  // loop function
 
-  struct {
-    uint16_t rnti;
-    uint32_t lcid;
-    srslet::byte_buffer_t *sdu;
-    uint16_t sdu_type;
-    sdu_t(uint16_t _rnti = 0, uint32_t _lcid = 0, srslte::byte_buffer_t * _sdu = 0, uint16_t _sdu_type):
-        rnti(_rnti),lcid(_lcid),sdu(_sdu),sdu_type(_sdu_type) {}
-  } sdu_t;
-  
   void write_pdu(uint16_t rnti, uint32_t lcid, srslte::byte_buffer_t *sdu); //
 
-  void* receive_loop();
-  void* send_loop();
-
   // some functions for send and receive loop
- int comb_normal(sdu_t& payload);
- int comb_ret(sdu_t& payload);
- int comb_upd(sdu_t& payload);
- int comb_abo(sdu_t& payload);
+ ssize_t comb_normal(sdu_t& payload);
+ ssize_t comb_ret(sdu_t& payload);
+ ssize_t comb_upd(sdu_t& payload);
+ ssize_t comb_abo(sdu_t& payload);
 
  void handle_normal(ssize_t len);
  void handle_ask(ssize_t len);
  void handle_abo(ssize_t len);
 
+private: 
 
   pthread_rwlock_t quelock;
   pthread_rwlock_t maplock;
@@ -108,18 +115,14 @@ private:
   pthread_t receive_tid;
   pthread_t send_tid;
 
-  std::map<uint32_t, sockaddr_in> users; 
+  std::map<uint32_t, sockaddr> users; 
+  // maybe common block_queue can be used?
   std::queue<sdu_t> sdu_queue;
 
   pdcp_interface_rlc            *pdcp;
   rrc_interface_rlc             *rrc;
-  srslte::log                   *log_h; 
-  srslte::byte_buffer_pool      *pool;
 
-  uint8_t receive_buffer[SRSENB_RLC_BUFFER_SIZE];
-  uint8_t send_buffer[SRSENB_RLC_BUFFER_SIZE];
-  int sock_fd;
-};
+  };
 
 }
 

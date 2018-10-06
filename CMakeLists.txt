@@ -62,7 +62,7 @@ configure_file(
 ########################################################################
 # Options
 ########################################################################
-option(ENABLE_SRSUE    "Build srsUE application"                  ON)
+option(ENABLE_SRSUE    "Build srsUE application"                  OFF)
 option(ENABLE_SRSENB   "Build srsENB application"                 ON)
 option(ENABLE_SRSEPC   "Build srsEPC application"                 ON)
 option(DISABLE_SIMD    "disable simd instructions"                OFF)

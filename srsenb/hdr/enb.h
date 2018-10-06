@@ -37,22 +37,17 @@
 #include <string>
 #include <pthread.h>
 
-#include "phy/phy.h"
-#include "mac/mac.h"
 #include "upper/rrc.h"
 #include "upper/gtpu.h"
 #include "upper/s1ap.h"
 #include "upper/rlc.h"
 #include "upper/pdcp.h"
 
-#include "srslte/radio/radio.h"
-
 #include "srslte/common/bcd_helpers.h"
 #include "srslte/common/buffer_pool.h"
 #include "srslte/interfaces/ue_interfaces.h"
 #include "srslte/common/logger_file.h"
 #include "srslte/common/log_filter.h"
-#include "srslte/common/mac_pcap.h"
 #include "srslte/interfaces/sched_interface.h"
 #include "srslte/interfaces/enb_metrics_interface.h"
 
@@ -122,8 +117,8 @@ typedef struct {
 }gui_args_t;
 
 typedef struct {
-  phy_args_t phy; 
-  mac_args_t mac; 
+  //phy_args_t phy; 
+  //mac_args_t mac; 
   uint32_t   rrc_inactivity_timer;
   float      metrics_period_secs;
   bool       enable_mbsfn;
@@ -134,7 +129,7 @@ typedef struct {
   enb_args_t    enb;
   enb_files_t   enb_files; 
   rf_args_t     rf;
-  rf_cal_t      rf_cal; 
+  //rf_cal_t      rf_cal; 
   pcap_args_t   pcap;
   log_args_t    log;
   gui_args_t    gui;
@@ -160,15 +155,16 @@ public:
 
   void print_pool();
 
-  static void rf_msg(srslte_rf_error_t error);
+  //static void rf_msg(srslte_rf_error_t error);
 
-  void handle_rf_msg(srslte_rf_error_t error);
+  //void handle_rf_msg(srslte_rf_error_t error);
 
   // eNodeB metrics interface
   bool get_metrics(enb_metrics_t &m);
 
   void pregenerate_signals(bool enable);
 
+  srsenb::rlc rlc;
 
 private:
   static enb *instance;
@@ -179,11 +175,10 @@ private:
 
   virtual ~enb();
 
-  srslte::radio radio;
-  srsenb::phy phy;
-  srsenb::mac mac;
-  srslte::mac_pcap mac_pcap;
-  srsenb::rlc rlc;
+  //srslte::radio radio;
+  //srsenb::phy phy;
+  //srsenb::mac mac;
+  //srslte::mac_pcap mac_pcap;
   srsenb::pdcp pdcp;
   srsenb::rrc rrc;
   srsenb::gtpu gtpu;
@@ -207,7 +202,7 @@ private:
 
   all_args_t       *args;
   bool              started;
-  rf_metrics_t      rf_metrics;
+  //rf_metrics_t      rf_metrics;
 
   srslte::LOG_LEVEL_ENUM level(std::string l);
   
@@ -218,7 +213,7 @@ private:
   int parse_sib4(std::string filename, LIBLTE_RRC_SYS_INFO_BLOCK_TYPE_4_STRUCT *data);
   int parse_sib9(std::string filename, LIBLTE_RRC_SYS_INFO_BLOCK_TYPE_9_STRUCT *data);
   int parse_sib13(std::string filename, LIBLTE_RRC_SYS_INFO_BLOCK_TYPE_13_STRUCT *data);
-  int parse_sibs(all_args_t *args, rrc_cfg_t *rrc_cfg, phy_cfg_t *phy_config_common); 
+  //int parse_sibs(all_args_t *args, rrc_cfg_t *rrc_cfg, phy_cfg_t *phy_config_common); 
   int parse_rr(all_args_t *args, rrc_cfg_t *rrc_cfg);
   int parse_drb(all_args_t *args, rrc_cfg_t *rrc_cfg); 
   bool sib_is_present(LIBLTE_RRC_SCHEDULING_INFO_STRUCT *sched_info, uint32_t nof_sched_info, LIBLTE_RRC_SIB_TYPE_ENUM sib_num);

@@ -111,8 +111,6 @@ public:
     pending_paging.clear();
 
     pool = NULL;
-    phy = NULL;
-    mac = NULL;
     rlc = NULL;
     pdcp = NULL;
     gtpu = NULL;
@@ -128,8 +126,6 @@ public:
   }
   
   void init(rrc_cfg_t *cfg,
-            phy_interface_rrc *phy, 
-            mac_interface_rrc *mac, 
             rlc_interface_rrc *rlc, 
             pdcp_interface_rrc *pdcp,
             s1ap_interface_rrc *s1ap,
@@ -335,8 +331,6 @@ private:
   srslte::bit_buffer_t  bit_buf_paging;
   srslte::byte_buffer_t erab_info;
     
-  phy_interface_rrc    *phy;
-  mac_interface_rrc    *mac;
   rlc_interface_rrc    *rlc;
   pdcp_interface_rrc   *pdcp;
   gtpu_interface_rrc   *gtpu;

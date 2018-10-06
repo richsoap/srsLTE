@@ -20,6 +20,4 @@
 
 add_subdirectory(asn1)
 add_subdirectory(common)
-add_subdirectory(phy)
-add_subdirectory(radio)
 add_subdirectory(upper)

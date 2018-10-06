@@ -119,7 +119,7 @@ void metrics_stdout::print_metrics()
   if (metrics.rrc.n_ues > 0) {
     
     for (int i=0;i<metrics.rrc.n_ues;i++) {
-      if (metrics.mac[i].tx_errors > metrics.mac[i].tx_pkts) {
+      /*if (metrics.mac[i].tx_errors > metrics.mac[i].tx_pkts) {
         printf("tx caution errors %d > %d\n", metrics.mac[i].tx_errors, metrics.mac[i].tx_pkts);
       }
       if (metrics.mac[i].rx_errors > metrics.mac[i].rx_pkts) {
@@ -173,7 +173,7 @@ void metrics_stdout::print_metrics()
   }
   if(metrics.rf.rf_error) {
     printf("RF status: O=%d, U=%d, L=%d\n", metrics.rf.rf_o, metrics.rf.rf_u, metrics.rf.rf_l);
-  }
+  }*/
 
   cout.flags(f); // For avoiding Coverity defect: Not restoring ostream format
 }

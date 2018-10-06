@@ -38,6 +38,7 @@
 #include <boost/program_options/parsers.hpp>
 #include <srsenb/hdr/enb.h>
 
+#include "srsenb/hdr/upper/rlc.h"
 #include "srsenb/hdr/enb.h"
 #include "srsenb/hdr/metrics_stdout.h"
 
@@ -128,7 +129,7 @@ void parse_args(all_args_t *args, int argc, char* argv[]) {
     ("log.file_max_size", bpo::value<int>(&args->log.file_max_size)->default_value(-1), "Maximum file size (in kilobytes). When passed, multiple files are created. Default -1 (single file)")
 
     /* MCS section */
-    ("scheduler.pdsch_mcs",
+   /* ("scheduler.pdsch_mcs",
         bpo::value<int>(&args->expert.mac.sched.pdsch_mcs)->default_value(-1),
         "Optional fixed PDSCH MCS (ignores reported CQIs if specified)")
     ("scheduler.pdsch_max_mcs",
@@ -143,7 +144,7 @@ void parse_args(all_args_t *args, int argc, char* argv[]) {
     ("scheduler.nof_ctrl_symbols",
         bpo::value<int>(&args->expert.mac.sched.nof_ctrl_symbols)->default_value(3),
         "Number of control symbols")
-
+*/
     
     /* Expert section */
 
@@ -151,7 +152,7 @@ void parse_args(all_args_t *args, int argc, char* argv[]) {
         bpo::value<float>(&args->expert.metrics_period_secs)->default_value(1.0),
         "Periodicity for metrics in seconds")
 
-    ("expert.pregenerate_signals",
+   /* ("expert.pregenerate_signals",
         bpo::value<bool>(&args->expert.phy.pregenerate_signals)->default_value(false),
         "Pregenerate uplink signals after attach. Improves CPU performance.")
 
@@ -182,7 +183,7 @@ void parse_args(all_args_t *args, int argc, char* argv[]) {
     ("expert.estimator_fil_w",
         bpo::value<float>(&args->expert.phy.estimator_fil_w)->default_value(0.1),
         "Chooses the coefficients for the 3-tap channel estimator centered filter.")
-
+*/
     ("expert.rrc_inactivity_timer",
         bpo::value<uint32_t>(&args->expert.rrc_inactivity_timer)->default_value(60000),
         "Inactivity timer in ms")
@@ -195,11 +196,11 @@ void parse_args(all_args_t *args, int argc, char* argv[]) {
         bpo::value<bool>(&args->expert.print_buffer_state)->default_value(false),
        "Prints on the console the buffer state every 10 seconds")
 
-    ("rf_calibration.tx_corr_dc_gain",  bpo::value<float>(&args->rf_cal.tx_corr_dc_gain)->default_value(0.0),  "TX DC offset gain correction")
+   /* ("rf_calibration.tx_corr_dc_gain",  bpo::value<float>(&args->rf_cal.tx_corr_dc_gain)->default_value(0.0),  "TX DC offset gain correction")
     ("rf_calibration.tx_corr_dc_phase", bpo::value<float>(&args->rf_cal.tx_corr_dc_phase)->default_value(0.0), "TX DC offset phase correction")
     ("rf_calibration.tx_corr_iq_i",     bpo::value<float>(&args->rf_cal.tx_corr_iq_i)->default_value(0.0),     "TX IQ imbalance inphase correction")
     ("rf_calibration.tx_corr_iq_q",     bpo::value<float>(&args->rf_cal.tx_corr_iq_q)->default_value(0.0),     "TX IQ imbalance quadrature correction")
-
+*/
   ;
 
   // Positional options - config file location
@@ -364,6 +365,77 @@ void sig_int_handler(int signo)
   }
 }
 
+void* receive_loop(void* arg) {
+   //rrc->read_pdu_bcch_dlsch(sib_index, payload); // have no idea
+   //rrc->read_pdu_pcch(payload, buffer_size); // have no idea what this is
+   //pdcp->write_pdu(rnti, lcid, sdu);
+   rlc* _rlc = (rlc*) arg;
+   ssize_t len;
+   uint8_t* buffer = _rlc->receive_buffer;
+   while(true) {
+       pthread_testcancel();
+       len = read(_rlc->sock_fd, buffer, (ssize_t)_rlc->BUFFER_SIZE);
+       switch(*(uint32_t*)buffer) {
+           case PDU_TYPE_NORMAL:
+               _rlc->handle_normal(len);
+               break;
+            case PDU_TYPE_ASKRNTI:
+               _rlc->handle_ask(len);
+               break;
+            case PDU_TYPE_ABORNTI:
+               _rlc->handle_abo(len);
+               break;
+            default:
+               _rlc->log_h->error("unknown pdu type 0x%x\n", *(uint32_t*)buffer[0]);
+       }
+   }
+}
+
+
+
+void* send_loop(void* arg) {
+    rlc* _rlc = (rlc*) arg;
+    sdu_t sdu;
+    ssize_t tar_len;
+    ssize_t send_len;
+    sockaddr addr;
+    while(true) {
+        pthread_testcancel();
+        if(_rlc->is_queue_empty()) {
+            usleep(2000);
+            continue;
+        }
+         sdu = _rlc->read_sdu();
+         switch(sdu.sdu_type) {
+             case SDU_TYPE_NORMAL:
+                 tar_len = _rlc->comb_normal(sdu);
+                 break;
+             case SDU_TYPE_RETRNTI:
+                 tar_len = _rlc->comb_ret(sdu);
+                 break;
+             case SDU_TYPE_UPDRNTI:
+                 tar_len = _rlc->comb_upd(sdu);
+                 break;
+             case SDU_TYPE_ABORNTI:
+                 tar_len = _rlc->comb_abo(sdu);
+             default:
+                 _rlc->log_h->error("unknown sdu type 0x%x\n", sdu.sdu_type);
+         }
+
+         if(!_rlc->get_addr(sdu.rnti, &addr))
+             _rlc->log_h->error("Rnti %d dose not exist.\n", sdu.rnti);
+         else {
+         // TODO:paging should get a spcific SDU_TYPE? Or just using broadcast addr is OK?
+            send_len = sendto(_rlc->sock_fd, _rlc->send_buffer, tar_len, 0, &addr, sizeof(struct sockaddr)); 
+            if(send_len != tar_len)
+                 _rlc->log_h->error("try to send: %d, sent: %d\n", (int)tar_len, (int)send_len);
+            else
+                _rlc->log_h->error("try to send msg to an Void.\n");
+         }
+         _rlc->pool->deallocate(sdu.sdu);
+    }
+}
+
 void *input_loop(void *m)
 {
   metrics_stdout *metrics = (metrics_stdout*) m;
@@ -407,7 +479,11 @@ int main(int argc, char *argv[])
   metrics.init(enb, args.expert.metrics_period_secs);
 
   pthread_t input;
+  pthread_t send_tid;
+  pthread_t receive_tid;
   pthread_create(&input, NULL, &input_loop, &metrics);
+  pthread_create(&send_tid, NULL, &send_loop, &(enb->rlc));
+  pthread_create(&receive_tid, NULL, &receive_loop, &(enb->rlc));
 
   bool plot_started         = false; 
   bool signals_pregenerated = false; 

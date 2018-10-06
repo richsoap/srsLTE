@@ -31,8 +31,7 @@
 
 namespace srsenb {
   
-void rlc::init(pdcp_interface_rlc* pdcp_, rrc_interface_rlc* rrc_, mac_interface_rlc *mac_, 
-               srslte::mac_interface_timers *mac_timers_, srslte::log* log_h_)
+void rlc::init(pdcp_interface_rlc* pdcp_, rrc_interface_rlc* rrc_, srslte::log* log_h_)
 {
   pdcp       = pdcp_; 
   rrc        = rrc_, 
@@ -40,24 +39,11 @@ void rlc::init(pdcp_interface_rlc* pdcp_, rrc_interface_rlc* rrc_, mac_interface
   pool       = srslte::byte_buffer_pool::get_instance();
   pthread_rwlock_init(&quelock, NULL);
   pthread_rwlock_init(&maplock, NULL);
-
-  int ret;
-  ret = pthread_create(&receive_tid, NULL, (void*)receive_loop, NULL);
-  if(ret)
-    log_h->error("something wrong with starting receive_loop\n");
-  else
-      log_h->debug("start receive_loop\n");
-  ret = pthread_create(&send_tid, NULL, (void*)send_loop, NULL);
-  if(ret)
-      log_h->error("something wrong with starting send_loop\n");
-  else
-      log_h->debug("start send_loop\n");
-
 }
 
 void rlc::stop()
 {
-  pthread_quelock_wrlock(&quelock);
+  pthread_rwlock_wrlock(&quelock);
   users.clear();
   pthread_rwlock_unlock(&quelock);
   pthread_cancel(receive_tid);
@@ -74,30 +60,33 @@ void rlc::add_user(uint16_t rnti)
 // Private unlocked deallocation of user
 void rlc::rem_user(uint16_t rnti)
 {
-  pthread_quelock_wrlock(&maplock);
+  pthread_rwlock_wrlock(&maplock);
   if (users.count(rnti)) {
       users.erase(rnti);
   } else {
     log_h->error("Removing rnti=0x%x. Already removed\n", rnti);
   }
-  pthread_quelock_unlock(&maplock);
+  pthread_rwlock_unlock(&maplock);
 }
 
 void rlc::clear_buffer(uint16_t rnti)
 {
-    std::queue<msg> temp_queue;
-    msg temp_msg;
-    pthread_quelock_rdlock(&quelock);
+    std::queue<sdu_t> temp_queue;
+    sdu_t temp_msg;
+    pthread_rwlock_rdlock(&quelock);
   while(!sdu_queue.empty()) {
     temp_msg  = sdu_queue.front();
-    if(temp_msg == rnti)
-        pool->deallocate(buf);
+    if(temp_msg.rnti == rnti)
+        pool->deallocate(temp_msg.sdu);
     else 
         temp_queue.push(temp_msg);
     sdu_queue.pop();
   }
-  temp_queue.swap(sdu_queue);
-  pthread_quelock_unlock(&quelock);
+  while(!temp_queue.empty()) {
+      sdu_queue.push(temp_queue.front());
+      temp_queue.pop();
+  }
+  pthread_rwlock_unlock(&quelock);
 }
 
 void rlc::add_bearer(uint16_t rnti, uint32_t lcid)
@@ -131,87 +120,36 @@ void rlc::add_bearer_mrb(uint16_t rnti, uint32_t lcid)
 
 void rlc::write_sdu(uint16_t rnti, uint32_t lcid, srslte::byte_buffer_t* sdu)
 {
-  pthread_quelock_rdlock(&quelock);
+  pthread_rwlock_rdlock(&quelock);
   if (users.count(rnti)) {
-      add_msg(msg(rnti, lcid, sdu, MSG_TYPE_NORMAL));
+      sdu_queue.push(sdu_t(rnti, lcid, sdu, SDU_TYPE_NORMAL));
   } else {
     pool->deallocate(sdu);
   }
-  pthread_quelock_unlock(&quelock);
+  pthread_rwlock_unlock(&quelock);
 }
 
-void rlc::add_sdu(sdu_t _sdu) {
-    pthread_quelock_rdlock(&quelock);
-    sdu_queue.push(_sdu);
-    pthread_cond_broadcast(&cond);
-    pthread_quelock_unlock(&quelock);
+bool rlc::is_queue_empty() {
+    return sdu_queue.empty(); 
 }
 
-void* rlc::receive_loop() {
-   rrc->read_pdu_bcch_dlsch(sib_index, payload); // have no idea
-   rrc->read_pdu_pcch(payload, buffer_size); // have no idea what this is
-   pdcp->write_pdu(rnti, lcid, sdu);
-   ssize_t len;
-   while(true) {
-       pthread_testcancel();
-       len = read(sock_fd, receive_buffer, (ssize_t)BUFFER_SIZE);
-       switch(*(uint32_t*)receive_buffer) {
-           case PDU_TYPE_NORMAL:
-               handle_normal(len);
-               break;
-            case PDU_TYPE_ASKRNTI:
-               handle_ask(len);
-               break;
-            case PDU_TYPE_ABORNTI:
-               handle_abo(len);
-               break;
-            default:
-               log_h->error("unknown pdu type 0x%x\n", receive_buffer[0]);
-       }
-   }
+sdu_t rlc::read_sdu() {
+    pthread_rwlock_wrlock(&quelock);
+    sdu_t result = sdu_queue.front();
+    sdu_queue.pop();
+    pthread_rwlock_unlock(&quelock);
+    return result;
 }
 
-
-
-void* rlc::send_loop() {
-    sdu_t sdu;
-    ssize_t tar_len;
-    ssize_t send_len;
-    while(true) {
-        pthread_testcancel();
-         pthread_quelock_rdlock(&quelock);
-         if(sdu_queue.empty()) 
-             pthread_cond_wait(&cond, &quelock);
-         sdu = sdu_queue.front();
-         sdu_queue.pop();
-         pthread_quelock_unlock(&quelock);
-         switch(sdu.sdu_type) {
-             case SDU_TYPE_NORMAL:
-                 tar_len = comb_normal(sdu);
-                 break;
-             case SDU_TYPE_RETRNTI:
-                 tar_len = comb_ret(sdu);
-                 break;
-             case SDU_TYPE_UPDRNTI:
-                 tar_len = comb_upd(sdu);
-                 break;
-             case SDU_TYPE_ABORNTI:
-                 tar_len = comb_abo(sdu);
-             default:
-                 log_h->error("unknown sdu type 0x%x\n", sdu.sdu_type);
-         }
-         pthread_quelock_rdlock(&maplock);
-         if(users.count(sdu.rnti)) {
-         send_len = sendto(sock_fd, send_buffer, tar_len, 0, (sockaddr)&users[sdu.rnti], 1); 
-         // TODO:paging should get a spcific SDU_TYPE? Or just using broadcast addr is OK?
-         if(send_len != tar_len)
-             log_h->error("try to send: %d, sent: %d\n", (int)tar_len, (int)send_len);
-         }
-         else
-             log_h->error("try to send msg to an Void.\n");
-         pthread_quelock_unlock(&maplock);
-         pool->deallocate(sdu.sdu);
+bool rlc::get_addr(uint16_t rnti, sockaddr* addr) {
+    bool result = false;
+    pthread_rwlock_rdlock(&maplock);
+    if(users.count(rnti)) {
+        *addr = users.find(rnti)->second;
+        result = true;
     }
+    pthread_rwlock_unlock(&maplock);
+    return result;
 }
 
 // some helpers
@@ -224,9 +162,9 @@ ssize_t rlc::comb_normal(sdu_t &sdu) {
     result += 2;
     *(uint32_t*)(send_buffer + result) = sdu.lcid;
     result += 4;
-    *(uint32_t*)(send_buffer + result) = sdu.sdu.N_bytes;
+    *(uint32_t*)(send_buffer + result) = sdu.sdu->N_bytes;
     result += 4;
-    memcpy((send_buffer + result), sdu.sdu.msg, sdu.sdu.N_bytes);
+    memcpy((send_buffer + result), sdu.sdu->msg, sdu.sdu->N_bytes);
     return result;
 }
 

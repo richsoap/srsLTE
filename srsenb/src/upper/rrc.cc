@@ -37,16 +37,12 @@ using srslte::bit_buffer_t;
 namespace srsenb {
   
 void rrc::init(rrc_cfg_t *cfg_,
-               phy_interface_rrc* phy_, 
-               mac_interface_rrc* mac_, 
                rlc_interface_rrc* rlc_, 
                pdcp_interface_rrc* pdcp_, 
                s1ap_interface_rrc *s1ap_,
                gtpu_interface_rrc* gtpu_,
                srslte::log* log_rrc)
 {
-  phy     = phy_; 
-  mac     = mac_; 
   rlc     = rlc_; 
   pdcp    = pdcp_; 
   gtpu    = gtpu_;
@@ -603,7 +599,6 @@ void rrc::rem_user(uint16_t rnti)
 
     /* First remove MAC and GTPU to stop processing DL/UL traffic for this user
      */
-    mac->ue_rem(rnti);  // MAC handles PHY
     gtpu->rem_user(rnti);
 
     // Now remove RLC and PDCP
@@ -646,8 +641,6 @@ void rrc::config_mac()
   // Copy Cell configuration
   memcpy(&sched_cfg.cell, &cfg.cell, sizeof(srslte_cell_t));
 
-  // Configure MAC scheduler
-  mac->cell_cfg(&sched_cfg);
 }
 
 uint32_t rrc::generate_sibs()
@@ -743,10 +736,6 @@ void rrc::configure_mbsfn_sibs(LIBLTE_RRC_SYS_INFO_BLOCK_TYPE_2_STRUCT *sib2, LI
   mcch.pmch_infolist_r9[0].pmch_config_r9.mch_schedulingperiod_r9 = LIBLTE_RRC_MCH_SCHEDULING_PERIOD_R9_RF64;
   mcch.pmch_infolist_r9[0].pmch_config_r9.sf_alloc_end_r9 = 64*6;
 
-
-
-  phy->configure_mbsfn(sib2,sib13,mcch);
-  mac->write_mcch(sib2,sib13,&mcch);
 }
 
 void rrc::configure_security(uint16_t rnti,
@@ -1071,8 +1060,8 @@ void rrc::ue::handle_rrc_con_setup_complete(LIBLTE_RRC_CONNECTION_SETUP_COMPLETE
   pdu->N_bytes = msg->dedicated_info_nas.N_bytes;
 
   // Acknowledge Dedicated Configuration
-  parent->phy->set_conf_dedicated_ack(rnti, true);
-  parent->mac->phy_config_enabled(rnti, true);
+  //parent->phy->set_conf_dedicated_ack(rnti, true);
+  //parent->mac->phy_config_enabled(rnti, true);
 
   if(has_tmsi) {
     parent->s1ap->initial_ue(rnti, (LIBLTE_S1AP_RRC_ESTABLISHMENT_CAUSE_ENUM)establishment_cause, pdu, m_tmsi, mmec);
@@ -1088,8 +1077,8 @@ void rrc::ue::handle_rrc_reconf_complete(LIBLTE_RRC_CONNECTION_RECONFIGURATION_C
 
 
   // Acknowledge Dedicated Configuration
-  parent->phy->set_conf_dedicated_ack(rnti, true);
-  parent->mac->phy_config_enabled(rnti, true);
+  //parent->phy->set_conf_dedicated_ack(rnti, true);
+  //parent->mac->phy_config_enabled(rnti, true);
 }
 
 void rrc::ue::handle_security_mode_complete(LIBLTE_RRC_SECURITY_MODE_COMPLETE_STRUCT *msg)
@@ -1416,7 +1405,7 @@ void rrc::ue::send_connection_setup(bool is_setup)
   sched_cfg.pucch_cfg.n1_pucch_an        = parent->sib2.rr_config_common_sib.pucch_cnfg.n1_pucch_an;
  
   // Configure MAC 
-  parent->mac->ue_cfg(rnti, &sched_cfg);
+  //parent->mac->ue_cfg(rnti, &sched_cfg);
     
   // Configure SRB1 in RLC
   parent->rlc->add_bearer(rnti, 1);
@@ -1428,10 +1417,10 @@ void rrc::ue::send_connection_setup(bool is_setup)
   parent->pdcp->add_bearer(rnti, 1, pdcp_cnfg);
 
   // Configure PHY layer
-  parent->phy->set_config_dedicated(rnti, phy_cfg);
-  parent->phy->set_conf_dedicated_ack(rnti, false);
-  parent->mac->set_dl_ant_info(rnti, &phy_cfg->antenna_info_explicit_value);
-  parent->mac->phy_config_enabled(rnti, false);
+  //parent->phy->set_config_dedicated(rnti, phy_cfg);
+  //parent->phy->set_conf_dedicated_ack(rnti, false);
+  //parent->mac->set_dl_ant_info(rnti, &phy_cfg->antenna_info_explicit_value);
+  //parent->mac->phy_config_enabled(rnti, false);
   
   rr_cfg->drb_to_add_mod_list_size = 0; 
   rr_cfg->drb_to_release_list_size = 0; 
@@ -1539,7 +1528,7 @@ void rrc::ue::send_connection_reconf_upd(srslte::byte_buffer_t *pdu)
       phy_cfg->cqi_report_cnfg.report_mode_aperiodic = LIBLTE_RRC_CQI_REPORT_MODE_APERIODIC_RM30;
     }
   }
-  parent->phy->set_config_dedicated(rnti, phy_cfg);
+  //parent->phy->set_config_dedicated(rnti, phy_cfg);
 
   sr_get(&phy_cfg->sched_request_cnfg.sr_cnfg_idx, &phy_cfg->sched_request_cnfg.sr_pucch_resource_idx);
   
@@ -1608,10 +1597,10 @@ void rrc::ue::send_connection_reconf(srslte::byte_buffer_t *pdu)
   }
   phy_cfg->cqi_report_cnfg.nom_pdsch_rs_epre_offset = 0;
 
-  parent->phy->set_config_dedicated(rnti, phy_cfg);
-  parent->phy->set_conf_dedicated_ack(rnti, false);
-  parent->mac->set_dl_ant_info(rnti, &phy_cfg->antenna_info_explicit_value);
-  parent->mac->phy_config_enabled(rnti, false);
+  //parent->phy->set_config_dedicated(rnti, phy_cfg);
+  //parent->phy->set_conf_dedicated_ack(rnti, false);
+  //parent->mac->set_dl_ant_info(rnti, &phy_cfg->antenna_info_explicit_value);
+  //parent->mac->phy_config_enabled(rnti, false);
 
   // Add SRB2 to the message 
   conn_reconf->rr_cnfg_ded.srb_to_add_mod_list_size = 1; 
@@ -1634,9 +1623,9 @@ void rrc::ue::send_connection_reconf(srslte::byte_buffer_t *pdu)
   srsenb::sched_interface::ue_bearer_cfg_t bearer_cfg;
   bearer_cfg.direction = srsenb::sched_interface::ue_bearer_cfg_t::BOTH;
   bearer_cfg.group = 0;
-  parent->mac->bearer_ue_cfg(rnti, 2, &bearer_cfg);
+  //parent->mac->bearer_ue_cfg(rnti, 2, &bearer_cfg);
   bearer_cfg.group = conn_reconf->rr_cnfg_ded.drb_to_add_mod_list[0].lc_cnfg.ul_specific_params.log_chan_group;
-  parent->mac->bearer_ue_cfg(rnti, 3, &bearer_cfg);
+  //parent->mac->bearer_ue_cfg(rnti, 3, &bearer_cfg);
   
   // Configure SRB2 in RLC and PDCP
   parent->rlc->add_bearer(rnti, 2);
@@ -1714,7 +1703,7 @@ void rrc::ue::send_connection_reconf_new_bearer(LIBLTE_S1AP_E_RABTOBESETUPLISTBE
     // Add DRB to the scheduler
     srsenb::sched_interface::ue_bearer_cfg_t bearer_cfg;
     bearer_cfg.direction = srsenb::sched_interface::ue_bearer_cfg_t::BOTH;
-    parent->mac->bearer_ue_cfg(rnti, lcid, &bearer_cfg);
+    //parent->mac->bearer_ue_cfg(rnti, lcid, &bearer_cfg);
 
     // Configure DRB in RLC
     parent->rlc->add_bearer(rnti, lcid, &conn_reconf->rr_cnfg_ded.drb_to_add_mod_list[i].rlc_cnfg);

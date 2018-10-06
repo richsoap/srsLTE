@@ -161,7 +161,8 @@ void pdcp::user_interface_rlc::write_sdu(uint32_t lcid, srslte::byte_buffer_t* s
 }
 
 bool pdcp::user_interface_rlc::rb_is_um(uint32_t lcid) {
-  return rlc->rb_is_um(rnti, lcid);
+  //return rlc->rb_is_um(rnti, lcid);
+  return true;
 }
 
 void pdcp::user_interface_rrc::write_pdu(uint32_t lcid, srslte::byte_buffer_t* pdu)

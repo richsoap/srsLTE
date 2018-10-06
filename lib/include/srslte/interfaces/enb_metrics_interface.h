@@ -34,22 +34,11 @@
 #include "srsenb/hdr/upper/rrc_metrics.h"
 #include "srsue/hdr/upper/gw_metrics.h"
 #include "srslte/upper/rlc_metrics.h"
-#include "srsenb/hdr/mac/mac_metrics.h"
-#include "srsenb/hdr/phy/phy_metrics.h"
 
 namespace srsenb {
   
 typedef struct {
-  uint32_t rf_o;
-  uint32_t rf_u;
-  uint32_t rf_l;
-  bool     rf_error;
-}rf_metrics_t;
-
-typedef struct {
-  rf_metrics_t    rf;
-  phy_metrics_t   phy[ENB_METRICS_MAX_USERS];
-  mac_metrics_t   mac[ENB_METRICS_MAX_USERS];
+  //rf_metrics_t    rf;
   rrc_metrics_t   rrc; 
   s1ap_metrics_t  s1ap;
   bool            running;

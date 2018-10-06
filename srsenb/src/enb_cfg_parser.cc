@@ -842,7 +842,7 @@ int enb::parse_sib13(std::string filename, LIBLTE_RRC_SYS_INFO_BLOCK_TYPE_13_STR
   return parser::parse_section(filename, &sib13);
 }
 
-int enb::parse_sibs(all_args_t *args, rrc_cfg_t *rrc_cfg, phy_cfg_t *phy_config_common)
+/*int enb::parse_sibs(all_args_t *args, rrc_cfg_t *rrc_cfg, phy_cfg_t *phy_config_common)
 {
   LIBLTE_RRC_SYS_INFO_BLOCK_TYPE_1_STRUCT *sib1 = &rrc_cfg->sibs[0].sib.sib1;
   rrc_cfg->sibs[0].sib_type = LIBLTE_RRC_SYS_INFO_BLOCK_TYPE_1; 
@@ -947,7 +947,7 @@ int enb::parse_sibs(all_args_t *args, rrc_cfg_t *rrc_cfg, phy_cfg_t *phy_config_
   memcpy(&phy_config_common->srs_ul_cnfg, &sib2->rr_config_common_sib.srs_ul_cnfg, sizeof(LIBLTE_RRC_SRS_UL_CONFIG_COMMON_STRUCT));
   
   return 0; 
-}
+}*/
 
 bool enb::sib_is_present(LIBLTE_RRC_SCHEDULING_INFO_STRUCT *sched_info, uint32_t nof_sched_info, LIBLTE_RRC_SIB_TYPE_ENUM sib_num) 
 {

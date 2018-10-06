@@ -33,7 +33,9 @@ namespace srsenb {
 class cfg_parser
 {
 public:
-  void parse_sibs(all_args_t *args, rrc_cfg_t *rrc_cfg, phy_cfg_t *phy_config_common); 
+ //  void parse_sibs(all_args_t *args, rrc_cfg_t *rrc_cfg, phy_cfg_t *phy_config_common); 
+ 
+ int parse_sibs(all_args_t *args, rrc_cfg_t *rrc_cfg); 
 };
 
 }
