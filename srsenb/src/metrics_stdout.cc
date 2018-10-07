@@ -116,10 +116,10 @@ void metrics_stdout::print_metrics()
     cout << "------DL------------------------------UL----------------------------------" << endl;
     cout << "rnti  cqi    ri   mcs  brate   bler   snr   phr   mcs  brate   bler    bsr" << endl;
   }
-  if (metrics.rrc.n_ues > 0) {
+  /*if (metrics.rrc.n_ues > 0) {
     
     for (int i=0;i<metrics.rrc.n_ues;i++) {
-      /*if (metrics.mac[i].tx_errors > metrics.mac[i].tx_pkts) {
+      if (metrics.mac[i].tx_errors > metrics.mac[i].tx_pkts) {
         printf("tx caution errors %d > %d\n", metrics.mac[i].tx_errors, metrics.mac[i].tx_pkts);
       }
       if (metrics.mac[i].rx_errors > metrics.mac[i].rx_pkts) {

@@ -58,10 +58,10 @@ int enb::parse_cell_cfg(all_args_t *args, srslte_cell_t *cell) {
   cell->phich_length    = (srslte_phich_length_t)    (int) phichcfg.dur;
   cell->phich_resources = (srslte_phich_resources_t) (int) phichcfg.res;
   
-  if (!srslte_cell_isvalid(cell)) {
+  /*if (!srslte_cell_isvalid(cell)) {
     fprintf(stderr, "Invalid cell parameters: nof_prb=%d, cell_id=%d\n", args->enb.n_prb, args->enb.s1ap.cell_id);
     return -1; 
-  }
+  }*/
   
   return 0; 
 }
@@ -1010,7 +1010,7 @@ int enb::parse_rr(all_args_t* args, rrc_cfg_t* rrc_cfg)
   }
 
   /* MAC config section */
-  parser::section mac_cnfg("mac_cnfg");
+ /* parser::section mac_cnfg("mac_cnfg");
 
   parser::section phr_cnfg("phr_cnfg");
   mac_cnfg.add_subsection(&phr_cnfg);
@@ -1058,11 +1058,11 @@ int enb::parse_rr(all_args_t* args, rrc_cfg_t* rrc_cfg)
     new parser::field_enum_num<LIBLTE_RRC_TIME_ALIGNMENT_TIMER_ENUM,int32>
     ("time_alignment_timer", &rrc_cfg->mac_cnfg.time_alignment_timer, 
      liblte_rrc_time_alignment_timer_num, LIBLTE_RRC_TIME_ALIGNMENT_TIMER_N_ITEMS)
-  );
+  );*/
 
 
   /* PHY config section */
-  parser::section phy_cfg("phy_cnfg");
+/*  parser::section phy_cfg("phy_cnfg");
 
   parser::section pusch_cnfg_ded("pusch_cnfg_ded");
   phy_cfg.add_subsection(&pusch_cnfg_ded);
@@ -1094,12 +1094,12 @@ int enb::parse_rr(all_args_t* args, rrc_cfg_t* rrc_cfg)
   cqi_report_cnfg.add_field(new parser::field<uint32> ("period", &rrc_cfg->cqi_cfg.period));
   cqi_report_cnfg.add_field(new parser::field<uint32> ("nof_prb", &rrc_cfg->cqi_cfg.nof_prb));
   cqi_report_cnfg.add_field(new parser::field<bool> ("simultaneousAckCQI", &rrc_cfg->cqi_cfg.simultaneousAckCQI));
-  cqi_report_cnfg.add_field(new field_sf_mapping(rrc_cfg->cqi_cfg.sf_mapping, &rrc_cfg->cqi_cfg.nof_subframes));
+  cqi_report_cnfg.add_field(new field_sf_mapping(rrc_cfg->cqi_cfg.sf_mapping, &rrc_cfg->cqi_cfg.nof_subframes));*/
   
   // Run parser with two sections
   parser p(args->enb_files.rr_config);
-  p.add_section(&mac_cnfg);
-  p.add_section(&phy_cfg);
+  //p.add_section(&mac_cnfg);
+  //p.add_section(&phy_cfg);
   return p.parse();
 }
 

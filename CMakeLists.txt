@@ -64,11 +64,11 @@ configure_file(
 ########################################################################
 option(ENABLE_SRSUE    "Build srsUE application"                  OFF)
 option(ENABLE_SRSENB   "Build srsENB application"                 ON)
-option(ENABLE_SRSEPC   "Build srsEPC application"                 ON)
+option(ENABLE_SRSEPC   "Build srsEPC application"                 OFF)
 option(DISABLE_SIMD    "disable simd instructions"                OFF)
 
 option(ENABLE_GUI      "Enable GUI (using srsGUI)"                ON)
-option(ENABLE_BLADERF  "Enable BladeRF"                           ON)
+option(ENABLE_BLADERF  "Enable BladeRF"                           OFF)
 option(ENABLE_SOAPYSDR "Enable SoapySDR"                          ON)
 
 option(BUILD_STATIC    "Attempt to statically link external deps" OFF)

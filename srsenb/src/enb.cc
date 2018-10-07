@@ -43,7 +43,7 @@ enb* enb::get_instance(void)
 }
 void enb::cleanup(void)
 {
-  srslte_dft_exit();
+  //srslte_dft_exit();
   srslte::byte_buffer_pool::cleanup();
   pthread_mutex_lock(&enb_instance_mutex);
   if(NULL != instance) {
@@ -54,7 +54,7 @@ void enb::cleanup(void)
 }
 
 enb::enb() : started(false) {
-  srslte_dft_load();
+  //srslte_dft_load();
   pool = srslte::byte_buffer_pool::get_instance(ENB_POOL_SIZE);
 
   logger = NULL;
