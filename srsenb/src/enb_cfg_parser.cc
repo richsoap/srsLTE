@@ -965,7 +965,7 @@ int enb::parse_rr(all_args_t* args, rrc_cfg_t* rrc_cfg)
 {
 
   /* Transmission mode config section */
-  if (args->enb.transmission_mode < 1 || args->enb.transmission_mode > 4) {
+  /*if (args->enb.transmission_mode < 1 || args->enb.transmission_mode > 4) {
     ERROR("Invalid transmission mode (%d). Only indexes 1-4 are implemented.\n", args->enb.transmission_mode);
     return SRSLTE_ERROR;
   } else if (args->enb.transmission_mode == 1 && args->enb.nof_ports > 1) {
@@ -995,10 +995,10 @@ int enb::parse_rr(all_args_t* args, rrc_cfg_t* rrc_cfg)
     rrc_cfg->antenna_info.codebook_subset_restriction_choice = LIBLTE_RRC_CODEBOOK_SUBSET_RESTRICTION_N2_TM4;
     rrc_cfg->antenna_info.codebook_subset_restriction = 0b111111;
     rrc_cfg->antenna_info.codebook_subset_restriction_present = true;
-  }
+  }*/
 
   /* Parse power allocation */
-  rrc_cfg->pdsch_cfg = LIBLTE_RRC_PDSCH_CONFIG_P_A_N_ITEMS;
+  /*rrc_cfg->pdsch_cfg = LIBLTE_RRC_PDSCH_CONFIG_P_A_N_ITEMS;
   for (int i = 0; i < LIBLTE_RRC_PDSCH_CONFIG_P_A_N_ITEMS; i++) {
     if (args->enb.p_a == liblte_rrc_pdsch_config_p_a_num[i]) {
       rrc_cfg->pdsch_cfg = (LIBLTE_RRC_PDSCH_CONFIG_P_A_ENUM) i;
@@ -1007,7 +1007,7 @@ int enb::parse_rr(all_args_t* args, rrc_cfg_t* rrc_cfg)
   if (rrc_cfg->pdsch_cfg == LIBLTE_RRC_PDSCH_CONFIG_P_A_N_ITEMS) {
     ERROR("Invalid p_a value (%f) only -6, -4.77, -3, -1.77, 0, 1, 2, 3 values allowed.", args->enb.p_a);
     return SRSLTE_ERROR;
-  }
+  }*/
 
   /* MAC config section */
  /* parser::section mac_cnfg("mac_cnfg");

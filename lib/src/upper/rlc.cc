@@ -89,7 +89,7 @@ void rlc::get_metrics(rlc_metrics_t &m)
   gettimeofday(&metrics_time[2], NULL);
   get_time_interval(metrics_time);
   double secs = (double)metrics_time[0].tv_sec + metrics_time[0].tv_usec*1e-6;
-  
+ /* 
   m.dl_tput_mbps = 0; 
   m.ul_tput_mbps = 0; 
   for (int i=0;i<SRSLTE_N_RADIO_BEARERS;i++) {
@@ -112,6 +112,7 @@ void rlc::get_metrics(rlc_metrics_t &m)
                     (dl_tput_bytes_mrb[i]*8/(double)1e6)/secs);
     }
   }
+  */
 
   memcpy(&metrics_time[1], &metrics_time[2], sizeof(struct timeval));
   reset_metrics();

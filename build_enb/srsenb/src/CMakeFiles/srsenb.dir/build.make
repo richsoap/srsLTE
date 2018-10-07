@@ -202,8 +202,8 @@ srsenb/src/srsenb: /usr/lib/x86_64-linux-gnu/libmbedcrypto.so
 srsenb/src/srsenb: /usr/lib/x86_64-linux-gnu/libconfig++.so
 srsenb/src/srsenb: /usr/lib/x86_64-linux-gnu/libsctp.so
 srsenb/src/srsenb: lib/src/common/libsrslte_common.a
-srsenb/src/srsenb: lib/src/asn1/libsrslte_asn1.a
 srsenb/src/srsenb: /usr/lib/x86_64-linux-gnu/libmbedcrypto.so
+srsenb/src/srsenb: lib/src/asn1/libsrslte_asn1.a
 srsenb/src/srsenb: srsenb/src/CMakeFiles/srsenb.dir/link.txt
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/home/richsoap/Workspaces/srsLTE/build_enb/CMakeFiles --progress-num=$(CMAKE_PROGRESS_6) "Linking CXX executable srsenb"
 	cd /home/richsoap/Workspaces/srsLTE/build_enb/srsenb/src && $(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/srsenb.dir/link.txt --verbose=$(VERBOSE)

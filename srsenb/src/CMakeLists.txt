@@ -16,6 +16,7 @@ endif (RPATH)
 add_executable(srsenb main.cc enb.cc parser.cc enb_cfg_parser.cc metrics_stdout.cc)
 target_link_libraries(srsenb  srsenb_upper
                               srslte_common
+                              srslte_phy
                               srslte_upper
                               ${CMAKE_THREAD_LIBS_INIT} 
                               ${Boost_LIBRARIES} 
