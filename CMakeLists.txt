@@ -46,6 +46,11 @@ configure_file(
     "${CMAKE_CURRENT_SOURCE_DIR}/CTestCustom.cmake.in"
     "${CMAKE_CURRENT_BINARY_DIR}/CTestCustom.cmake"
     IMMEDIATE @ONLY)
+########################################################################
+# Set Debug Mode
+########################################################################
+
+set(CMAKE_BUILD_TYPE Debug)
 
 if(NOT CMAKE_BUILD_TYPE)
    set(CMAKE_BUILD_TYPE Release)

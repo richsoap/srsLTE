@@ -147,7 +147,6 @@
 /usr/local/include/srslte/srslte.h
 /usr/local/lib/libsrslte_asn1.a
 /usr/local/lib/libsrslte_common.a
-/usr/local/lib/libsrslte_phy.a
 /usr/local/lib/libsrslte_upper.a
 /usr/local/include/srslte/version.h
 /usr/local/share/srslte/enb.conf.example

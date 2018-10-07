@@ -476,6 +476,7 @@ int main(int argc, char *argv[])
   if(!enb->init(&args)) {
     exit(1);
   }
+  cout << "--- Enb Init --- \n\n";
   metrics.init(enb, args.expert.metrics_period_secs);
 
   pthread_t input;
