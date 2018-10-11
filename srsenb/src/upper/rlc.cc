@@ -156,62 +156,95 @@ bool rlc::get_addr(uint16_t rnti, sockaddr* addr) {
 
 ssize_t rlc::comb_normal(sdu_t &sdu) {
     ssize_t result = 0;
-    *(uint32_t*)send_buffer = SDU_TYPE_NORMAL;
-    result += 4;
-    *(uint16_t*)(send_buffer + result) = sdu.rnti;
-    result += 2;
-    *(uint32_t*)(send_buffer + result) = sdu.lcid;
-    result += 4;
-    *(uint32_t*)(send_buffer + result) = sdu.sdu->N_bytes;
+    send_buffer[result] = SDU_TYPE_NORMAL;
+    result += 1;
+    send_buffer[result] = sdu.rnti;
+    result += 1;
+    send_buffer[result] = sdu.lcid;
+    result += 1;
+    *(uint32_t)(send_buffer + result) = sdu.sdu->N_bytes;
     result += 4;
     memcpy((send_buffer + result), sdu.sdu->msg, sdu.sdu->N_bytes);
     return result;
 }
 
-ssize_t rlc::comb_ret(sdu_t &sdu) {
+ssize_t rlc::comb_ret(uint8_t rnti) {
     ssize_t result = 0;
-    *(uint32_t *)send_buffer = SDU_TYPE_RETRNTI;
-    result += 4;
-    *(uint16_t*)(send_buffer + result) = sdu.rnti;
-    result += 2;
+    send_buffer[result] = SDU_TYPE_RETRNTI;
+    result += 1;
+    send_buffer[result] = sdu.rnti;
+    result += 1;
     return result;
 }
 
 ssize_t rlc::comb_upd(sdu_t &sdu) {
     ssize_t result = 0;
-    *(uint32_t *)send_buffer = SDU_TYPE_UPDRNTI;
-    result += 4;
-    *(uint16_t *)(send_buffer + result) = sdu.rnti;
-    result += 2;
+    send_buffer[result] = SDU_TYPE_UPDRNTI;
+    result += 1;
+    send_buffer[result] = sdu.rnti;
+    result += 1;
     return result;
 }
 
 ssize_t rlc::comb_abo(sdu_t &sdu) {
     ssize_t result = 0;
-    *(uint32_t *) send_buffer = SDU_TYPE_ABORNTI;
-    result += 4;
-    *(uint16_t *)(send_buffer + result) = sdu.rnti;
-    result += 2;
+    send_buffer[result] = SDU_TYPE_ABORNTI;
+    result += 1;
+    send_buffer[result] = sdu.rnti;
+    result += 1;
     return result;
 }
 
 void rlc::handle_normal(ssize_t len) {
     ssize_t offset = 0;
-    offset += 4;
-    uint16_t rnti = *(uint16_t *)(receive_buffer + offset);
-    offset += 2;
-    uint32_t lcid = *(uint32_t *)(receive_buffer + offset);
-    offset += 4;
+    offset += 1;
+    uint16_t rnti = (uint16_t)receive_buffer[offset];
+    offset += 1;
+    uint32_t lcid = (uint32_t)(receive_buffer[offset]);
+    offset += 1;
     uint32_t in_len = *(uint32_t *)(receive_buffer + offset);
     offset += 4;
-    if(len - offset != offset) 
+    if(len - offset != in_len) 
         log_h->error("Wrong recv size, need %d, get %d\n", (int)in_len, (int)len);
     else {
-        uint8_t* payload = new uint8_t[in_len + 1];
-        //TODO how to transfer uint8_t[] to sdu???
+        srslte::byte_buffer_t* sdu = pool->allocate("Receive UPD\n");
+        memcpy(sdu->buffer, receive_buffer + offset, in_len);
+        sdu->N_bytes = in_len;
+        pdcp->write_pdu(rnti, lcid, sdu);
     }
 }
-void rlc::handle_ask(ssize_t len) {}
-void rlc::handle_abo(ssize_t len) {}
+void rlc::handle_ask(ssize_t len) {
+    ssize_t offset = 0;
+    offset += 1;
+    ulong ue_addr[4];
+    for(;offset < 5;offset ++) 
+        ue_addr[i] = (ulong)receive_buffer[offset];
+    pthread_rwlock_wrlock(&map_lock);
+    for(uint8_t i = 1;i < 0xfffd;i ++)  {
+        if(0 == users.count(i)) {
+           struct sockaddr_in ue_addr_in;
+           bzero(&ue_addr_in, sizeof(sockaddr_in));
+           ue_addr_in.sin_family = AF_INET;
+           ue_addr_in.sin_port = htons(ue_addr[4]);
+           ue_addr_in.sin.addr.s_addr = ue_addr[0] << 24 + ue_addr[1] << 16 + ue_addr[2] << 8 + ue_addr[3];
+           users.insert[rnti] = ue_addr_in;
+           rrc->add_user(rnti);
+        }
+    }
+    pthread_rwlock_unlock(&map_lock);
+    pthread_rwlock_rdlock(&quelock);
+    srslte::byte_buffer_t* sdu = pool->allocate("Send rnti\n");
+    sdu_queue.push(sdu_t(rnti, 0, sdu, SDU_TYPE_NORMAL));
+    pthread_rwlock_unlock(&quelock);
 
+}
+void rlc::handle_abo(ssize_t len) {}
+    ssize_t offset = 0;
+    offset += 1;
+    pthread_rwlock_wrlock(&map_lock);
+    if(users.count(receive_buffer[offset]))
+        users.earse(receive_buffer[offset]);
+    else
+        log_h->error("Try to abo wrong rnti %d\n", (uint8_t)receive_buffer[offset])
+    pthread_rwlock_unlock(&map_lock);
 }

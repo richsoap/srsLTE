@@ -138,11 +138,12 @@ void pdcp::write_sdu(uint16_t rnti, uint32_t lcid, srslte::byte_buffer_t* sdu)
 {
   pthread_rwlock_rdlock(&rwlock);
   if (users.count(rnti)) {
-    if(rnti != SRSLTE_MRNTI){
+    /*if(rnti != SRSLTE_MRNTI){
       users[rnti].pdcp->write_sdu(lcid, sdu);
     }else {
       users[rnti].pdcp->write_sdu_mch(lcid, sdu);
-    }
+    }*/
+      rlc->write_sdu(rnti, lcid, sdu);
   } else {
     pool->deallocate(sdu);
   }
