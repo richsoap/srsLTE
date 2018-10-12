@@ -36,7 +36,7 @@
 #ifndef SRSENB_RLC_H
 #define SRSENB_RLC_H
 
-#define SRSENB_RLC_BUFFER_SIZE
+#define SRSENB_RLC_BUFFER_SIZE 65536
 
 #define SDU_TYPE_NORMAL 0x00
 #define SDU_TYPE_RETRNTI 0x01
@@ -61,18 +61,18 @@ typedef struct {
     std::string rlc_bind_addr;
     uint32_t rlc_bind_port;
 }rlc_args_t;
- 
 
-class rlc :  public rlc_interface_rrc, 
+
+class rlc :  public rlc_interface_rrc,
              public rlc_interface_pdcp
 {
 public:
- 
-   void init(pdcp_interface_rlc *pdcp_, rrc_interface_rlc *rrc_, rrc_interface_mac *rrc_mac_, srslte::log *log_h, std::string bind_addr, uint32_t bind_port); 
+
+   void init(pdcp_interface_rlc *pdcp_, rrc_interface_rlc *rrc_, rrc_interface_mac *rrc_mac_, srslte::log *log_h, std::string bind_addr, uint32_t bind_port);
   // did not get socket
   // did not malloc buffer
   void stop(); //
-  
+
   // rlc_interface_rrc
   void clear_buffer(uint16_t rnti);//
   void add_user(uint16_t rnti); //
@@ -89,15 +89,15 @@ public:
   bool is_queue_empty();
   sdu_t read_sdu();
   bool get_addr(uint16_t rnti, sockaddr_in* addr);
-  
-  srslte::log                   *log_h; 
+
+  srslte::log                   *log_h;
   srslte::byte_buffer_pool      *pool;
 
+  const static int BUFFER_SIZE = 65536;
+  int sock_fd;
   uint8_t receive_buffer[SRSENB_RLC_BUFFER_SIZE];
   uint8_t send_buffer[SRSENB_RLC_BUFFER_SIZE];
-  int sock_fd;
 
-  const static int BUFFER_SIZE = 65536;
   // loop function
 
   void write_pdu(uint16_t rnti, uint32_t lcid, srslte::byte_buffer_t *sdu); //
@@ -120,7 +120,7 @@ public:
  uint16_t get_uint16(uint8_t* src);
  uint32_t get_uint32(uint8_t* src);
 
-private: 
+private:
 
   pthread_rwlock_t quelock;
   pthread_rwlock_t maplock;
@@ -130,8 +130,8 @@ private:
 
   // maybe common block_queue can be used?
   std::queue<sdu_t> sdu_queue;
-  std::map<uint16_t, sockaddr_in> users; 
-  
+  std::map<uint16_t, sockaddr_in> users;
+
   pdcp_interface_rlc            *pdcp;
   rrc_interface_rlc             *rrc;
   rrc_interface_mac             *rrc_mac;

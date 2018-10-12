@@ -80,7 +80,7 @@ void parse_args(all_args_t *args, int argc, char* argv[]) {
     ("enb.gtp_bind_addr", bpo::value<string>(&args->enb.s1ap.gtp_bind_addr)->default_value("192.168.3.1"), "Local IP address to bind for GTP connection")
     ("enb.s1c_bind_addr", bpo::value<string>(&args->enb.s1ap.s1c_bind_addr)->default_value("192.168.3.1"), "Local IP address to bind for S1AP connection")
     ("enb.rlc_bind_addr", bpo::value<string>(&args->enb.rlc.rlc_bind_addr)->default_value("127.0.0.1"), "IP address for UE to connect")
-    ("enb,rlc_bind_port", bpo::value<uint32_t>(&args->enb.rlc.rlc_bind_port)->default_value(10001), "Port for UE to connect")
+    ("enb.rlc_bind_port", bpo::value<uint32_t>(&args->enb.rlc.rlc_bind_port)->default_value(10001), "Port for UE to connect")
     ("enb.phy_cell_id",   bpo::value<uint32_t>(&args->enb.pci)->default_value(0),                  "Physical Cell Identity (PCI)")
     ("enb.n_prb",         bpo::value<uint32_t>(&args->enb.n_prb)->default_value(25),               "Number of PRB")
     ("enb.nof_ports",     bpo::value<uint32_t>(&args->enb.nof_ports)->default_value(1),            "Number of ports")
@@ -147,7 +147,7 @@ void parse_args(all_args_t *args, int argc, char* argv[]) {
         bpo::value<int>(&args->expert.mac.sched.nof_ctrl_symbols)->default_value(3),
         "Number of control symbols")
 */
-    
+
     /* Expert section */
 
     ("expert.metrics_period_secs",
@@ -189,7 +189,7 @@ void parse_args(all_args_t *args, int argc, char* argv[]) {
     ("expert.rrc_inactivity_timer",
         bpo::value<uint32_t>(&args->expert.rrc_inactivity_timer)->default_value(60000),
         "Inactivity timer in ms")
-  
+
     ("expert.enable_mbsfn",
         bpo::value<bool>(&args->expert.enable_mbsfn)->default_value(false),
         "enables mbms in the enodeb")
@@ -377,7 +377,8 @@ void* receive_loop(void* arg) {
    while(true) {
        pthread_testcancel();
        len = read(_rlc->sock_fd, buffer, (ssize_t)_rlc->BUFFER_SIZE);
-       switch(*(uint32_t*)buffer) {
+       printf("Receive PDU type:0x%x len:%d\n", buffer[0], (int)len);
+       switch(buffer[0]) {
            case PDU_TYPE_NORMAL:
                _rlc->handle_normal(len);
                break;
@@ -424,12 +425,20 @@ void* send_loop(void* arg) {
              default:
                  _rlc->log_h->error("unknown sdu type 0x%x\n", sdu.sdu_type);
          }
-            if(sdu.rnti < 0xFFFD && !_rlc->get_addr(sdu.rnti, &addr)) {
-                send_len = sendto(_rlc->sock_fd, _rlc->send_buffer, tar_len, 0, (sockaddr*)&addr, sizeof(struct sockaddr)); 
+            if(sdu.rnti < 0xFFFD && _rlc->get_addr(sdu.rnti, &addr)) {
+                _rlc->log_h->debug("Try to send to rnti:%d, len:%d\n",sdu.rnti,tar_len);
+                ///
+                //
+                addr.sin_family = AF_INET;
+                addr.sin_addr.s_addr = inet_addr("127.0.0.1");
+                addr.sin_port = htons(6259);
+                //
+                //
+                send_len = sendto(_rlc->sock_fd, _rlc->send_buffer, tar_len, 0, (sockaddr*)&addr, sizeof(struct sockaddr));
                 if(send_len != tar_len)
                      _rlc->log_h->error("try to send: %d, sent: %d\n", (int)tar_len, (int)send_len);
                 else
-                    _rlc->log_h->error("try to send msg to an Void.\n");
+                    _rlc->log_h->error("Send successfully.\n");
             }
             else if(sdu.rnti >= 0xFFFD){
                 temp = _rlc->send_broadcast(tar_len);
@@ -492,12 +501,12 @@ int main(int argc, char *argv[])
   pthread_create(&send_tid, NULL, &send_loop, &(enb->rlc));
   pthread_create(&receive_tid, NULL, &receive_loop, &(enb->rlc));
 
-  bool plot_started         = false; 
-  bool signals_pregenerated = false; 
+  bool plot_started         = false;
+  bool signals_pregenerated = false;
   if(running) {
     if (!plot_started && args.gui.enable) {
       enb->start_plot();
-      plot_started = true; 
+      plot_started = true;
     }
   }
   int cnt=0;

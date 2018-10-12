@@ -1,4 +1,4 @@
-#IncludeRegexLine: ^[ 	]*#[ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
 
 #IncludeRegexScan: ^.*$
 
@@ -1374,49 +1374,49 @@ map
 queue
 -
 
-/home/richsoap/Workspaces/srsLTE/lib/src/upper/gtpu.cc
+/home/houmin/enb/srsLTE/lib/src/upper/gtpu.cc
 srslte/upper/gtpu.h
-/home/richsoap/Workspaces/srsLTE/lib/src/upper/srslte/upper/gtpu.h
+/home/houmin/enb/srsLTE/lib/src/upper/srslte/upper/gtpu.h
 
-/home/richsoap/Workspaces/srsLTE/lib/src/upper/pdcp.cc
+/home/houmin/enb/srsLTE/lib/src/upper/pdcp.cc
 srslte/upper/pdcp.h
-/home/richsoap/Workspaces/srsLTE/lib/src/upper/srslte/upper/pdcp.h
+/home/houmin/enb/srsLTE/lib/src/upper/srslte/upper/pdcp.h
 
-/home/richsoap/Workspaces/srsLTE/lib/src/upper/pdcp_entity.cc
+/home/houmin/enb/srsLTE/lib/src/upper/pdcp_entity.cc
 srslte/upper/pdcp_entity.h
-/home/richsoap/Workspaces/srsLTE/lib/src/upper/srslte/upper/pdcp_entity.h
+/home/houmin/enb/srsLTE/lib/src/upper/srslte/upper/pdcp_entity.h
 srslte/common/security.h
-/home/richsoap/Workspaces/srsLTE/lib/src/upper/srslte/common/security.h
+/home/houmin/enb/srsLTE/lib/src/upper/srslte/common/security.h
 
-/home/richsoap/Workspaces/srsLTE/lib/src/upper/rlc.cc
+/home/houmin/enb/srsLTE/lib/src/upper/rlc.cc
 srslte/upper/rlc.h
-/home/richsoap/Workspaces/srsLTE/lib/src/upper/srslte/upper/rlc.h
+/home/houmin/enb/srsLTE/lib/src/upper/srslte/upper/rlc.h
 srslte/upper/rlc_tm.h
-/home/richsoap/Workspaces/srsLTE/lib/src/upper/srslte/upper/rlc_tm.h
+/home/houmin/enb/srsLTE/lib/src/upper/srslte/upper/rlc_tm.h
 srslte/upper/rlc_um.h
-/home/richsoap/Workspaces/srsLTE/lib/src/upper/srslte/upper/rlc_um.h
+/home/houmin/enb/srsLTE/lib/src/upper/srslte/upper/rlc_um.h
 srslte/upper/rlc_am.h
-/home/richsoap/Workspaces/srsLTE/lib/src/upper/srslte/upper/rlc_am.h
+/home/houmin/enb/srsLTE/lib/src/upper/srslte/upper/rlc_am.h
 
-/home/richsoap/Workspaces/srsLTE/lib/src/upper/rlc_am.cc
+/home/houmin/enb/srsLTE/lib/src/upper/rlc_am.cc
 srslte/upper/rlc_am.h
-/home/richsoap/Workspaces/srsLTE/lib/src/upper/srslte/upper/rlc_am.h
+/home/houmin/enb/srsLTE/lib/src/upper/srslte/upper/rlc_am.h
 iostream
 -
 sstream
 -
 
-/home/richsoap/Workspaces/srsLTE/lib/src/upper/rlc_entity.cc
+/home/houmin/enb/srsLTE/lib/src/upper/rlc_entity.cc
 srslte/upper/rlc_entity.h
-/home/richsoap/Workspaces/srsLTE/lib/src/upper/srslte/upper/rlc_entity.h
+/home/houmin/enb/srsLTE/lib/src/upper/srslte/upper/rlc_entity.h
 
-/home/richsoap/Workspaces/srsLTE/lib/src/upper/rlc_tm.cc
+/home/houmin/enb/srsLTE/lib/src/upper/rlc_tm.cc
 srslte/upper/rlc_tm.h
-/home/richsoap/Workspaces/srsLTE/lib/src/upper/srslte/upper/rlc_tm.h
+/home/houmin/enb/srsLTE/lib/src/upper/srslte/upper/rlc_tm.h
 
-/home/richsoap/Workspaces/srsLTE/lib/src/upper/rlc_um.cc
+/home/houmin/enb/srsLTE/lib/src/upper/rlc_um.cc
 srslte/upper/rlc_um.h
-/home/richsoap/Workspaces/srsLTE/lib/src/upper/srslte/upper/rlc_um.h
+/home/houmin/enb/srsLTE/lib/src/upper/srslte/upper/rlc_um.h
 sstream
 -
 srslte/upper/rlc_interface.h

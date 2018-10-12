@@ -1,26 +1,24 @@
 Determining if the pthread_create exist failed with the following output:
-Change Dir: /home/richsoap/Workspaces/srsLTE/build/CMakeFiles/CMakeTmp
+Change Dir: /home/houmin/enb/srsLTE/build/CMakeFiles/CMakeTmp
 
-Run Build Command:"/usr/bin/make" "cmTC_64315/fast"
-make[1]: Entering directory '/home/richsoap/Workspaces/srsLTE/build/CMakeFiles/CMakeTmp'
-/usr/bin/make -f CMakeFiles/cmTC_64315.dir/build.make CMakeFiles/cmTC_64315.dir/build
-make[2]: Entering directory '/home/richsoap/Workspaces/srsLTE/build/CMakeFiles/CMakeTmp'
-Building C object CMakeFiles/cmTC_64315.dir/CheckSymbolExists.c.o
-/usr/bin/cc     -o CMakeFiles/cmTC_64315.dir/CheckSymbolExists.c.o   -c /home/richsoap/Workspaces/srsLTE/build/CMakeFiles/CMakeTmp/CheckSymbolExists.c
-Linking C executable cmTC_64315
-/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_64315.dir/link.txt --verbose=1
-/usr/bin/cc       CMakeFiles/cmTC_64315.dir/CheckSymbolExists.c.o  -o cmTC_64315 -rdynamic 
-CMakeFiles/cmTC_64315.dir/CheckSymbolExists.c.o：在函数‘main’中：
-CheckSymbolExists.c:(.text+0x16)：对‘pthread_create’未定义的引用
+Run Build Command:"/usr/bin/make" "cmTC_abb66/fast"
+/usr/bin/make -f CMakeFiles/cmTC_abb66.dir/build.make CMakeFiles/cmTC_abb66.dir/build
+make[1]: Entering directory '/home/houmin/enb/srsLTE/build/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_abb66.dir/CheckSymbolExists.c.o
+/usr/bin/cc    -o CMakeFiles/cmTC_abb66.dir/CheckSymbolExists.c.o   -c /home/houmin/enb/srsLTE/build/CMakeFiles/CMakeTmp/CheckSymbolExists.c
+Linking C executable cmTC_abb66
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_abb66.dir/link.txt --verbose=1
+/usr/bin/cc      -rdynamic CMakeFiles/cmTC_abb66.dir/CheckSymbolExists.c.o  -o cmTC_abb66 
+CMakeFiles/cmTC_abb66.dir/CheckSymbolExists.c.o: In function `main':
+CheckSymbolExists.c:(.text+0x1b): undefined reference to `pthread_create'
 collect2: error: ld returned 1 exit status
-CMakeFiles/cmTC_64315.dir/build.make:97: recipe for target 'cmTC_64315' failed
-make[2]: *** [cmTC_64315] Error 1
-make[2]: Leaving directory '/home/richsoap/Workspaces/srsLTE/build/CMakeFiles/CMakeTmp'
-Makefile:126: recipe for target 'cmTC_64315/fast' failed
-make[1]: *** [cmTC_64315/fast] Error 2
-make[1]: Leaving directory '/home/richsoap/Workspaces/srsLTE/build/CMakeFiles/CMakeTmp'
+CMakeFiles/cmTC_abb66.dir/build.make:97: recipe for target 'cmTC_abb66' failed
+make[1]: *** [cmTC_abb66] Error 1
+make[1]: Leaving directory '/home/houmin/enb/srsLTE/build/CMakeFiles/CMakeTmp'
+Makefile:126: recipe for target 'cmTC_abb66/fast' failed
+make: *** [cmTC_abb66/fast] Error 2
 
-File /home/richsoap/Workspaces/srsLTE/build/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
+File /home/houmin/enb/srsLTE/build/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
 /* */
 #include <pthread.h>
 
@@ -36,41 +34,37 @@ int main(int argc, char** argv)
 }
 
 Determining if the function pthread_create exists in the pthreads failed with the following output:
-Change Dir: /home/richsoap/Workspaces/srsLTE/build/CMakeFiles/CMakeTmp
+Change Dir: /home/houmin/enb/srsLTE/build/CMakeFiles/CMakeTmp
 
-Run Build Command:"/usr/bin/make" "cmTC_9e55e/fast"
-make[1]: Entering directory '/home/richsoap/Workspaces/srsLTE/build/CMakeFiles/CMakeTmp'
-/usr/bin/make -f CMakeFiles/cmTC_9e55e.dir/build.make CMakeFiles/cmTC_9e55e.dir/build
-make[2]: Entering directory '/home/richsoap/Workspaces/srsLTE/build/CMakeFiles/CMakeTmp'
-Building C object CMakeFiles/cmTC_9e55e.dir/CheckFunctionExists.c.o
-/usr/bin/cc    -DCHECK_FUNCTION_EXISTS=pthread_create   -o CMakeFiles/cmTC_9e55e.dir/CheckFunctionExists.c.o   -c /usr/share/cmake-3.5/Modules/CheckFunctionExists.c
-Linking C executable cmTC_9e55e
-/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_9e55e.dir/link.txt --verbose=1
-/usr/bin/cc   -DCHECK_FUNCTION_EXISTS=pthread_create    CMakeFiles/cmTC_9e55e.dir/CheckFunctionExists.c.o  -o cmTC_9e55e -rdynamic -lpthreads 
-/usr/bin/ld: 找不到 -lpthreads
+Run Build Command:"/usr/bin/make" "cmTC_24591/fast"
+/usr/bin/make -f CMakeFiles/cmTC_24591.dir/build.make CMakeFiles/cmTC_24591.dir/build
+make[1]: Entering directory '/home/houmin/enb/srsLTE/build/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_24591.dir/CheckFunctionExists.c.o
+/usr/bin/cc   -DCHECK_FUNCTION_EXISTS=pthread_create   -o CMakeFiles/cmTC_24591.dir/CheckFunctionExists.c.o   -c /usr/share/cmake-3.10/Modules/CheckFunctionExists.c
+Linking C executable cmTC_24591
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_24591.dir/link.txt --verbose=1
+/usr/bin/cc  -DCHECK_FUNCTION_EXISTS=pthread_create    -rdynamic CMakeFiles/cmTC_24591.dir/CheckFunctionExists.c.o  -o cmTC_24591 -lpthreads 
+/usr/bin/x86_64-linux-gnu-ld: cannot find -lpthreads
 collect2: error: ld returned 1 exit status
-CMakeFiles/cmTC_9e55e.dir/build.make:97: recipe for target 'cmTC_9e55e' failed
-make[2]: *** [cmTC_9e55e] Error 1
-make[2]: Leaving directory '/home/richsoap/Workspaces/srsLTE/build/CMakeFiles/CMakeTmp'
-Makefile:126: recipe for target 'cmTC_9e55e/fast' failed
-make[1]: *** [cmTC_9e55e/fast] Error 2
-make[1]: Leaving directory '/home/richsoap/Workspaces/srsLTE/build/CMakeFiles/CMakeTmp'
+CMakeFiles/cmTC_24591.dir/build.make:97: recipe for target 'cmTC_24591' failed
+make[1]: *** [cmTC_24591] Error 1
+make[1]: Leaving directory '/home/houmin/enb/srsLTE/build/CMakeFiles/CMakeTmp'
+Makefile:126: recipe for target 'cmTC_24591/fast' failed
+make: *** [cmTC_24591/fast] Error 2
 
 
 Performing C SOURCE FILE Test HAVE_AVX512 failed with the following output:
-Change Dir: /home/richsoap/Workspaces/srsLTE/build/CMakeFiles/CMakeTmp
+Change Dir: /home/houmin/enb/srsLTE/build/CMakeFiles/CMakeTmp
 
-Run Build Command:"/usr/bin/make" "cmTC_48656/fast"
-make[1]: Entering directory '/home/richsoap/Workspaces/srsLTE/build/CMakeFiles/CMakeTmp'
-/usr/bin/make -f CMakeFiles/cmTC_48656.dir/build.make CMakeFiles/cmTC_48656.dir/build
-make[2]: Entering directory '/home/richsoap/Workspaces/srsLTE/build/CMakeFiles/CMakeTmp'
-Building C object CMakeFiles/cmTC_48656.dir/src.c.o
-/usr/bin/cc    -DHAVE_AVX512 -mavx512f   -o CMakeFiles/cmTC_48656.dir/src.c.o   -c /home/richsoap/Workspaces/srsLTE/build/CMakeFiles/CMakeTmp/src.c
-Linking C executable cmTC_48656
-/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_48656.dir/link.txt --verbose=1
-/usr/bin/cc   -DHAVE_AVX512 -mavx512f    CMakeFiles/cmTC_48656.dir/src.c.o  -o cmTC_48656 -rdynamic 
-make[2]: Leaving directory '/home/richsoap/Workspaces/srsLTE/build/CMakeFiles/CMakeTmp'
-make[1]: Leaving directory '/home/richsoap/Workspaces/srsLTE/build/CMakeFiles/CMakeTmp'
+Run Build Command:"/usr/bin/make" "cmTC_7fae2/fast"
+/usr/bin/make -f CMakeFiles/cmTC_7fae2.dir/build.make CMakeFiles/cmTC_7fae2.dir/build
+make[1]: Entering directory '/home/houmin/enb/srsLTE/build/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_7fae2.dir/src.c.o
+/usr/bin/cc   -DHAVE_AVX512 -mavx512f   -o CMakeFiles/cmTC_7fae2.dir/src.c.o   -c /home/houmin/enb/srsLTE/build/CMakeFiles/CMakeTmp/src.c
+Linking C executable cmTC_7fae2
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_7fae2.dir/link.txt --verbose=1
+/usr/bin/cc  -DHAVE_AVX512 -mavx512f    -rdynamic CMakeFiles/cmTC_7fae2.dir/src.c.o  -o cmTC_7fae2 
+make[1]: Leaving directory '/home/houmin/enb/srsLTE/build/CMakeFiles/CMakeTmp'
 
 Return value: FAILED_TO_RUN
 Source file was:
@@ -94,20 +88,18 @@ Source file was:
             return 0;
           }
 Performing C++ SOURCE FILE Test HAVE_VISIBILITY_HIDDEN failed with the following output:
-Change Dir: /home/richsoap/Workspaces/srsLTE/build/CMakeFiles/CMakeTmp
+Change Dir: /home/houmin/enb/srsLTE/build/CMakeFiles/CMakeTmp
 
-Run Build Command:"/usr/bin/make" "cmTC_146cd/fast"
-make[1]: Entering directory '/home/richsoap/Workspaces/srsLTE/build/CMakeFiles/CMakeTmp'
-/usr/bin/make -f CMakeFiles/cmTC_146cd.dir/build.make CMakeFiles/cmTC_146cd.dir/build
-make[2]: Entering directory '/home/richsoap/Workspaces/srsLTE/build/CMakeFiles/CMakeTmp'
-Building CXX object CMakeFiles/cmTC_146cd.dir/src.cxx.o
-/usr/bin/c++     -march=native -Wall -Wno-comment -Wno-reorder -Wno-unused-but-set-variable -Wno-unused-variable -Wformat -Wmissing-field-initializers -Wtype-limits -std=c++03 -mfpmath=sse -mavx2 -DLV_HAVE_AVX2 -DLV_HAVE_AVX -DLV_HAVE_SSE -O3 -DBUILD_TYPE_RELEASE -DHAVE_VISIBILITY_HIDDEN  -march=native -Wall -Wno-comment -Wno-write-strings -Winline -Wno-unused-result -Wformat -Wmissing-field-initializers -Wtype-limits -std=c99 -D_GNU_SOURCE -O3 -DBUILD_TYPE_RELEASE -mfpmath=sse -mavx2 -DLV_HAVE_AVX2 -DLV_HAVE_AVX -DLV_HAVE_SSE -mfma -DLV_HAVE_FMA -Ofast -funroll-loops   -fvisibility=hidden -o CMakeFiles/cmTC_146cd.dir/src.cxx.o -c /home/richsoap/Workspaces/srsLTE/build/CMakeFiles/CMakeTmp/src.cxx
+Run Build Command:"/usr/bin/make" "cmTC_06574/fast"
+/usr/bin/make -f CMakeFiles/cmTC_06574.dir/build.make CMakeFiles/cmTC_06574.dir/build
+make[1]: Entering directory '/home/houmin/enb/srsLTE/build/CMakeFiles/CMakeTmp'
+Building CXX object CMakeFiles/cmTC_06574.dir/src.cxx.o
+/usr/bin/c++    -march=native -Wall -Wno-comment -Wno-reorder -Wno-unused-but-set-variable -Wno-unused-variable -Wformat -Wmissing-field-initializers -Wtype-limits -std=c++03 -mfpmath=sse -mavx2 -DLV_HAVE_AVX2 -DLV_HAVE_AVX -DLV_HAVE_SSE -ggdb -O0 -DDEBUG_MODE -DBUILD_TYPE_DEBUG -DHAVE_VISIBILITY_HIDDEN  -march=native -Wall -Wno-comment -Wno-write-strings -Winline -Wno-unused-result -Wformat -Wmissing-field-initializers -Wtype-limits -std=c99 -D_GNU_SOURCE -ggdb -O0 -DDEBUG_MODE -DBUILD_TYPE_DEBUG -mfpmath=sse -mavx2 -DLV_HAVE_AVX2 -DLV_HAVE_AVX -DLV_HAVE_SSE -mfma -DLV_HAVE_FMA   -fvisibility=hidden -o CMakeFiles/cmTC_06574.dir/src.cxx.o -c /home/houmin/enb/srsLTE/build/CMakeFiles/CMakeTmp/src.cxx
 cc1plus: warning: command line option '-std=c99' is valid for C/ObjC but not for C++
-Linking CXX executable cmTC_146cd
-/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_146cd.dir/link.txt --verbose=1
-/usr/bin/c++    -march=native -Wall -Wno-comment -Wno-reorder -Wno-unused-but-set-variable -Wno-unused-variable -Wformat -Wmissing-field-initializers -Wtype-limits -std=c++03 -mfpmath=sse -mavx2 -DLV_HAVE_AVX2 -DLV_HAVE_AVX -DLV_HAVE_SSE -O3 -DBUILD_TYPE_RELEASE -DHAVE_VISIBILITY_HIDDEN  -march=native -Wall -Wno-comment -Wno-write-strings -Winline -Wno-unused-result -Wformat -Wmissing-field-initializers -Wtype-limits -std=c99 -D_GNU_SOURCE -O3 -DBUILD_TYPE_RELEASE -mfpmath=sse -mavx2 -DLV_HAVE_AVX2 -DLV_HAVE_AVX -DLV_HAVE_SSE -mfma -DLV_HAVE_FMA -Ofast -funroll-loops    CMakeFiles/cmTC_146cd.dir/src.cxx.o  -o cmTC_146cd -rdynamic 
-make[2]: Leaving directory '/home/richsoap/Workspaces/srsLTE/build/CMakeFiles/CMakeTmp'
-make[1]: Leaving directory '/home/richsoap/Workspaces/srsLTE/build/CMakeFiles/CMakeTmp'
+Linking CXX executable cmTC_06574
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_06574.dir/link.txt --verbose=1
+/usr/bin/c++   -march=native -Wall -Wno-comment -Wno-reorder -Wno-unused-but-set-variable -Wno-unused-variable -Wformat -Wmissing-field-initializers -Wtype-limits -std=c++03 -mfpmath=sse -mavx2 -DLV_HAVE_AVX2 -DLV_HAVE_AVX -DLV_HAVE_SSE -ggdb -O0 -DDEBUG_MODE -DBUILD_TYPE_DEBUG -DHAVE_VISIBILITY_HIDDEN  -march=native -Wall -Wno-comment -Wno-write-strings -Winline -Wno-unused-result -Wformat -Wmissing-field-initializers -Wtype-limits -std=c99 -D_GNU_SOURCE -ggdb -O0 -DDEBUG_MODE -DBUILD_TYPE_DEBUG -mfpmath=sse -mavx2 -DLV_HAVE_AVX2 -DLV_HAVE_AVX -DLV_HAVE_SSE -mfma -DLV_HAVE_FMA    -rdynamic CMakeFiles/cmTC_06574.dir/src.cxx.o  -o cmTC_06574 
+make[1]: Leaving directory '/home/houmin/enb/srsLTE/build/CMakeFiles/CMakeTmp'
 
 Source file was:
 int main() { return 0; }

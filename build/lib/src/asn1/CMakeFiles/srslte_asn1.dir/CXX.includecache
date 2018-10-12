@@ -1,4 +1,4 @@
-#IncludeRegexLine: ^[ 	]*#[ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
 
 #IncludeRegexScan: ^.*$
 
@@ -1158,27 +1158,27 @@ srslte/phy/sync/cfo.h
 srslte/phy/sync/cp.h
 ../lib/include/srslte/srslte/phy/sync/cp.h
 
-/home/richsoap/Workspaces/srsLTE/lib/src/asn1/gtpc.cc
+/home/houmin/enb/srsLTE/lib/src/asn1/gtpc.cc
 stdint.h
 -
 srslte/asn1/gtpc.h
-/home/richsoap/Workspaces/srsLTE/lib/src/asn1/srslte/asn1/gtpc.h
+/home/houmin/enb/srsLTE/lib/src/asn1/srslte/asn1/gtpc.h
 srslte/common/common.h
-/home/richsoap/Workspaces/srsLTE/lib/src/asn1/srslte/common/common.h
+/home/houmin/enb/srsLTE/lib/src/asn1/srslte/common/common.h
 
-/home/richsoap/Workspaces/srsLTE/lib/src/asn1/liblte_common.cc
+/home/houmin/enb/srsLTE/lib/src/asn1/liblte_common.cc
 srslte/asn1/liblte_common.h
-/home/richsoap/Workspaces/srsLTE/lib/src/asn1/srslte/asn1/liblte_common.h
+/home/houmin/enb/srsLTE/lib/src/asn1/srslte/asn1/liblte_common.h
 
-/home/richsoap/Workspaces/srsLTE/lib/src/asn1/liblte_mme.cc
+/home/houmin/enb/srsLTE/lib/src/asn1/liblte_mme.cc
 srslte/asn1/liblte_mme.h
-/home/richsoap/Workspaces/srsLTE/lib/src/asn1/srslte/asn1/liblte_mme.h
+/home/houmin/enb/srsLTE/lib/src/asn1/srslte/asn1/liblte_mme.h
 srslte/common/liblte_security.h
-/home/richsoap/Workspaces/srsLTE/lib/src/asn1/srslte/common/liblte_security.h
+/home/houmin/enb/srsLTE/lib/src/asn1/srslte/common/liblte_security.h
 
-/home/richsoap/Workspaces/srsLTE/lib/src/asn1/liblte_rrc.cc
+/home/houmin/enb/srsLTE/lib/src/asn1/liblte_rrc.cc
 srslte/asn1/liblte_rrc.h
-/home/richsoap/Workspaces/srsLTE/lib/src/asn1/srslte/asn1/liblte_rrc.h
+/home/houmin/enb/srsLTE/lib/src/asn1/srslte/asn1/liblte_rrc.h
 stdlib.h
 -
 stdio.h
@@ -1186,9 +1186,9 @@ stdio.h
 stdarg.h
 -
 
-/home/richsoap/Workspaces/srsLTE/lib/src/asn1/liblte_s1ap.cc
+/home/houmin/enb/srsLTE/lib/src/asn1/liblte_s1ap.cc
 srslte/asn1/liblte_s1ap.h
-/home/richsoap/Workspaces/srsLTE/lib/src/asn1/srslte/asn1/liblte_s1ap.h
+/home/houmin/enb/srsLTE/lib/src/asn1/srslte/asn1/liblte_s1ap.h
 stdio.h
 -
 stdarg.h

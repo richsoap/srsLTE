@@ -4,17 +4,20 @@
 
 
 # Configuration directories and files
-SourceDirectory: /home/richsoap/Workspaces/srsLTE
-BuildDirectory: /home/richsoap/Workspaces/srsLTE/build
+SourceDirectory: /home/houmin/enb/srsLTE
+BuildDirectory: /home/houmin/enb/srsLTE/build
 
 # Where to place the cost data store
 CostDataFile: 
 
 # Site is something like machine.domain, i.e. pragmatic.crd
-Site: richsoap
+Site: cosmos
 
 # Build name is osname-revision-compiler, i.e. Linux-2.4.2-2smp-c++
 BuildName: Linux-c++
+
+# Subprojects
+LabelsForSubprojects: 
 
 # Submission information
 IsCDash: TRUE
@@ -33,7 +36,7 @@ ScpCommand: /usr/bin/scp
 NightlyStartTime: 00:00:00 GMT
 
 # Commands for the build/test/submit cycle
-ConfigureCommand: "/usr/bin/cmake" "/home/richsoap/Workspaces/srsLTE"
+ConfigureCommand: "/usr/bin/cmake" "/home/houmin/enb/srsLTE"
 MakeCommand: /usr/bin/cmake --build . --config "${CTEST_CONFIGURATION_TYPE}" -- -i
 DefaultCTestConfigurationType: Release
 
@@ -46,12 +49,13 @@ CVSCommand: CVSCOMMAND-NOTFOUND
 CVSUpdateOptions: -d -A -P
 
 # Subversion options
-SVNCommand: /usr/bin/svn
+SVNCommand: SVNCOMMAND-NOTFOUND
 SVNOptions: 
 SVNUpdateOptions: 
 
 # Git options
 GITCommand: /usr/bin/git
+GITInitSubmodules: 
 GITUpdateOptions: 
 GITUpdateCustom: 
 
@@ -69,7 +73,7 @@ UpdateType: git
 
 # Compiler info
 Compiler: /usr/bin/c++
-CompilerVersion: 5.4.0
+CompilerVersion: 7.3.0
 
 # Dynamic analysis (MemCheck)
 PurifyCommand: 
