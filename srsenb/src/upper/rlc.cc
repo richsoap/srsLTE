@@ -31,14 +31,39 @@
 
 namespace srsenb {
   
-void rlc::init(pdcp_interface_rlc* pdcp_, rrc_interface_rlc* rrc_, srslte::log* log_h_)
+void rlc::init(pdcp_interface_rlc* pdcp_, rrc_interface_rlc* rrc_, rrc_interface_mac* rrc_mac_, srslte::log* log_h_, std::string bind_addr, uint32_t bind_port)
 {
   pdcp       = pdcp_; 
-  rrc        = rrc_, 
+  rrc        = rrc_;
+  rrc_mac    = rrc_mac_;
   log_h      = log_h_; 
   pool       = srslte::byte_buffer_pool::get_instance();
   pthread_rwlock_init(&quelock, NULL);
   pthread_rwlock_init(&maplock, NULL);
+  sock_fd = socket(AF_INET, SOCK_DGRAM, 0);
+  struct sockaddr_in rlc_addr;
+  int result = 0;
+  if(sock_fd < 0) 
+      result = 1;
+  else {
+    memset(&rlc_addr, 0, sizeof(rlc_addr));
+    rlc_addr.sin_family = AF_INET;
+    inet_pton(AF_INET, bind_addr.c_str(), &rlc_addr.sin_addr);
+    rlc_addr.sin_port = htons(bind_port);
+    if(bind(sock_fd, (struct sockaddr*)&rlc_addr, sizeof(rlc_addr)) < 0)
+        result = 2;
+  }
+  switch(result) {
+    case 1:
+        log_h->error("Invalid socket fd in rlc init\n");
+        break;
+    case 2:
+        log_h->error("Bind error in rlc init\n");
+        break;
+    default:
+        log_h->debug("Rlc bind to ip%s:%d\n", bind_addr.c_str(), bind_port);
+  }
+
 }
 
 void rlc::stop()
@@ -54,6 +79,7 @@ void rlc::stop()
 
 void rlc::add_user(uint16_t rnti)
 {
+    log_h->debug("Try to add user %d", rnti);
 // do nothing, because user has exsited.
 }
 
@@ -141,7 +167,7 @@ sdu_t rlc::read_sdu() {
     return result;
 }
 
-bool rlc::get_addr(uint16_t rnti, sockaddr* addr) {
+bool rlc::get_addr(uint16_t rnti, sockaddr_in* addr) {
     bool result = false;
     pthread_rwlock_rdlock(&maplock);
     if(users.count(rnti)) {
@@ -152,28 +178,53 @@ bool rlc::get_addr(uint16_t rnti, sockaddr* addr) {
     return result;
 }
 
+// some translaters
+
+void rlc::set_uint16(uint8_t* tar, uint16_t val) {
+    tar[1] = (uint8_t)val;
+    tar[0] = (uint8_t)(val >> 8);
+}
+
+void rlc::set_uint32(uint8_t* tar, uint32_t val) {
+    set_uint16(tar + 2, (uint16_t)val);
+    set_uint16(tar, (uint16_t)(val >> 16));
+}
+
+uint16_t rlc::get_uint16(uint8_t* src){
+    uint16_t result = 0;
+    result = src[0];
+    result = (result << 8) + src[1];
+    return result;
+}
+
+uint32_t rlc::get_uint32(uint8_t* src) {
+    uint32_t result = 0;
+    result = get_uint16(src);
+    result = (result << 16) + get_uint16(src + 2);
+    return result;
+}
+
 // some helpers
 
 ssize_t rlc::comb_normal(sdu_t &sdu) {
     ssize_t result = 0;
     send_buffer[result] = SDU_TYPE_NORMAL;
     result += 1;
-    send_buffer[result] = sdu.rnti;
-    result += 1;
+    set_uint16(send_buffer + result, sdu.rnti);
+    result += 2;
     send_buffer[result] = sdu.lcid;
     result += 1;
-    *(uint32_t)(send_buffer + result) = sdu.sdu->N_bytes;
-    result += 4;
+    set_uint32(send_buffer + result, sdu.sdu->N_bytes);
     memcpy((send_buffer + result), sdu.sdu->msg, sdu.sdu->N_bytes);
     return result;
 }
 
-ssize_t rlc::comb_ret(uint8_t rnti) {
+ssize_t rlc::comb_ret(sdu_t &sdu) {
     ssize_t result = 0;
     send_buffer[result] = SDU_TYPE_RETRNTI;
     result += 1;
-    send_buffer[result] = sdu.rnti;
-    result += 1;
+    set_uint16(send_buffer + result, sdu.rnti);
+    result += 2;
     return result;
 }
 
@@ -181,8 +232,8 @@ ssize_t rlc::comb_upd(sdu_t &sdu) {
     ssize_t result = 0;
     send_buffer[result] = SDU_TYPE_UPDRNTI;
     result += 1;
-    send_buffer[result] = sdu.rnti;
-    result += 1;
+    set_uint16(send_buffer + result, sdu.rnti);
+    result += 2;
     return result;
 }
 
@@ -190,19 +241,19 @@ ssize_t rlc::comb_abo(sdu_t &sdu) {
     ssize_t result = 0;
     send_buffer[result] = SDU_TYPE_ABORNTI;
     result += 1;
-    send_buffer[result] = sdu.rnti;
-    result += 1;
+    set_uint16(send_buffer + result, sdu.rnti);
+    result += 2;
     return result;
 }
 
 void rlc::handle_normal(ssize_t len) {
     ssize_t offset = 0;
     offset += 1;
-    uint16_t rnti = (uint16_t)receive_buffer[offset];
-    offset += 1;
-    uint32_t lcid = (uint32_t)(receive_buffer[offset]);
-    offset += 1;
-    uint32_t in_len = *(uint32_t *)(receive_buffer + offset);
+    uint16_t rnti = get_uint16(receive_buffer+offset);
+    offset += 2;
+    uint32_t lcid = get_uint32(receive_buffer+offset);
+    offset += 4;
+    uint32_t in_len = get_uint32(receive_buffer+offset);
     offset += 4;
     if(len - offset != in_len) 
         log_h->error("Wrong recv size, need %d, get %d\n", (int)in_len, (int)len);
@@ -216,35 +267,52 @@ void rlc::handle_normal(ssize_t len) {
 void rlc::handle_ask(ssize_t len) {
     ssize_t offset = 0;
     offset += 1;
-    ulong ue_addr[4];
+    uint32_t ue_addr[4];
+    uint16_t rnti = 0;
     for(;offset < 5;offset ++) 
-        ue_addr[i] = (ulong)receive_buffer[offset];
-    pthread_rwlock_wrlock(&map_lock);
-    for(uint8_t i = 1;i < 0xfffd;i ++)  {
+        ue_addr[offset] = (uint32_t)receive_buffer[offset];
+    pthread_rwlock_wrlock(&maplock);
+    for(uint16_t i = 1;i < 0xfffd;i ++)  {
         if(0 == users.count(i)) {
            struct sockaddr_in ue_addr_in;
            bzero(&ue_addr_in, sizeof(sockaddr_in));
            ue_addr_in.sin_family = AF_INET;
            ue_addr_in.sin_port = htons(ue_addr[4]);
-           ue_addr_in.sin.addr.s_addr = ue_addr[0] << 24 + ue_addr[1] << 16 + ue_addr[2] << 8 + ue_addr[3];
-           users.insert[rnti] = ue_addr_in;
-           rrc->add_user(rnti);
+           ue_addr_in.sin_addr.s_addr = (ue_addr[0] << 24) + (ue_addr[1] << 16) + (ue_addr[2] << 8) + ue_addr[3];
+           users[i] = ue_addr_in;
+           rrc_mac->add_user(i);
+           rnti = i;
+           break;
         }
     }
-    pthread_rwlock_unlock(&map_lock);
+    pthread_rwlock_unlock(&maplock);
     pthread_rwlock_rdlock(&quelock);
     srslte::byte_buffer_t* sdu = pool->allocate("Send rnti\n");
+    if(rnti != 0)
     sdu_queue.push(sdu_t(rnti, 0, sdu, SDU_TYPE_NORMAL));
     pthread_rwlock_unlock(&quelock);
 
 }
-void rlc::handle_abo(ssize_t len) {}
+void rlc::handle_abo(ssize_t len) {
     ssize_t offset = 0;
     offset += 1;
-    pthread_rwlock_wrlock(&map_lock);
+    pthread_rwlock_wrlock(&maplock);
     if(users.count(receive_buffer[offset]))
-        users.earse(receive_buffer[offset]);
+        users.erase(receive_buffer[offset]);
     else
-        log_h->error("Try to abo wrong rnti %d\n", (uint8_t)receive_buffer[offset])
-    pthread_rwlock_unlock(&map_lock);
+        log_h->error("Try to abo wrong rnti %d\n", (uint8_t)receive_buffer[offset]);
+    pthread_rwlock_unlock(&maplock);
+}
+
+int rlc::send_broadcast(ssize_t len) {
+    int result = 0;
+    pthread_rwlock_wrlock(&maplock);
+        for(std::map<uint16_t, sockaddr_in>::iterator it = users.begin(); it != users.end(); it ++) {
+            if(len == sendto(sock_fd, send_buffer, len, 0, (sockaddr*)(&(it->second)), sizeof(struct sockaddr)))
+                result ++;
+        }
+    pthread_rwlock_unlock(&maplock);
+    return result;
+}
+
 }

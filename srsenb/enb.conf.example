@@ -28,6 +28,8 @@ mnc = 01
 mme_addr = 127.0.1.100
 gtp_bind_addr = 127.0.1.1
 s1c_bind_addr = 127.0.1.1
+rlc_bind_addr = 127.0.0.1
+rlc_bind_port = 10001
 n_prb = 50
 #tm = 4
 #nof_ports = 2
@@ -135,8 +137,8 @@ enable = false
 #pdsch_mcs        = -1
 #pdsch_max_mcs    = -1
 #pusch_mcs        = -1
-pusch_max_mcs    = 16
-nof_ctrl_symbols = 3
+#pusch_max_mcs    = 16
+#nof_ctrl_symbols = 3
 
 #####################################################################
 # Expert configuration options
@@ -173,8 +175,8 @@ nof_ctrl_symbols = 3
 # tx_corr_iq_q: TX IQ imbalance quadrature correction
 # same can be configured for rx_*
 #####################################################################
-[rf_calibration]
-tx_corr_dc_gain = 20
-tx_corr_dc_phase = 184
-tx_corr_iq_i = 19
-tx_corr_iq_q = 97
+#[rf_calibration]
+#tx_corr_dc_gain = 20
+#tx_corr_dc_phase = 184
+#tx_corr_iq_i = 19
+#tx_corr_iq_q = 97

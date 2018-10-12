@@ -38,14 +38,14 @@
 
 #define SRSENB_RLC_BUFFER_SIZE
 
-#define SDU_TYPE_NORMAL 0xff00
-#define SDU_TYPE_RETRNTI 0xff01
-#define SDU_TYPE_UPDRNTI 0xff02
-#define SDU_TYPE_ABORNTI 0xff03
+#define SDU_TYPE_NORMAL 0x00
+#define SDU_TYPE_RETRNTI 0x01
+#define SDU_TYPE_UPDRNTI 0x02
+#define SDU_TYPE_ABORNTI 0x03
 
-#define PDU_TYPE_NORMAL 0xee00
-#define PDU_TYPE_ASKRNTI 0xee01
-#define PDU_TYPE_ABORNTI 0xee02
+#define PDU_TYPE_NORMAL 0x00
+#define PDU_TYPE_ASKRNTI 0x01
+#define PDU_TYPE_ABORNTI 0x02
 
 namespace srsenb {
 struct sdu_t{
@@ -56,6 +56,11 @@ struct sdu_t{
     sdu_t(uint16_t _rnti = 0, uint32_t _lcid = 0, srslte::byte_buffer_t * _sdu = 0, uint16_t _sdu_type = 0):
         rnti(_rnti),lcid(_lcid),sdu(_sdu),sdu_type(_sdu_type) {}
 };
+
+typedef struct {
+    std::string rlc_bind_addr;
+    uint32_t rlc_bind_port;
+}rlc_args_t;
  
 
 class rlc :  public rlc_interface_rrc, 
@@ -63,7 +68,7 @@ class rlc :  public rlc_interface_rrc,
 {
 public:
  
-   void init(pdcp_interface_rlc *pdcp_, rrc_interface_rlc *rrc_, srslte::log *log_h); 
+   void init(pdcp_interface_rlc *pdcp_, rrc_interface_rlc *rrc_, rrc_interface_mac *rrc_mac_, srslte::log *log_h, std::string bind_addr, uint32_t bind_port); 
   // did not get socket
   // did not malloc buffer
   void stop(); //
@@ -83,7 +88,7 @@ public:
   // some functions for send loop and recv loop
   bool is_queue_empty();
   sdu_t read_sdu();
-  bool get_addr(uint16_t rnti, sockaddr* addr);
+  bool get_addr(uint16_t rnti, sockaddr_in* addr);
   
   srslte::log                   *log_h; 
   srslte::byte_buffer_pool      *pool;
@@ -107,6 +112,14 @@ public:
  void handle_ask(ssize_t len);
  void handle_abo(ssize_t len);
 
+ int send_broadcast(ssize_t len);
+
+ //some functions for help
+ void set_uint16(uint8_t* tar, uint16_t val);
+ void set_uint32(uint8_t* tar, uint32_t val);
+ uint16_t get_uint16(uint8_t* src);
+ uint32_t get_uint32(uint8_t* src);
+
 private: 
 
   pthread_rwlock_t quelock;
@@ -115,12 +128,13 @@ private:
   pthread_t receive_tid;
   pthread_t send_tid;
 
-  std::map<uint32_t, sockaddr> users; 
   // maybe common block_queue can be used?
   std::queue<sdu_t> sdu_queue;
-
+  std::map<uint16_t, sockaddr_in> users; 
+  
   pdcp_interface_rlc            *pdcp;
   rrc_interface_rlc             *rrc;
+  rrc_interface_mac             *rrc_mac;
 
   };
 

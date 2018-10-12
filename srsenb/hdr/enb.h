@@ -59,6 +59,7 @@ namespace srsenb {
 
 typedef struct {
   s1ap_args_t s1ap; 
+  rlc_args_t rlc;
   uint32_t    n_prb; 
   uint32_t    pci; 
   uint32_t    nof_ports;

@@ -79,6 +79,8 @@ void parse_args(all_args_t *args, int argc, char* argv[]) {
     ("enb.mme_addr",      bpo::value<string>(&args->enb.s1ap.mme_addr)->default_value("127.0.0.1"),"IP address of MME for S1 connnection")
     ("enb.gtp_bind_addr", bpo::value<string>(&args->enb.s1ap.gtp_bind_addr)->default_value("192.168.3.1"), "Local IP address to bind for GTP connection")
     ("enb.s1c_bind_addr", bpo::value<string>(&args->enb.s1ap.s1c_bind_addr)->default_value("192.168.3.1"), "Local IP address to bind for S1AP connection")
+    ("enb.rlc_bind_addr", bpo::value<string>(&args->enb.rlc.rlc_bind_addr)->default_value("127.0.0.1"), "IP address for UE to connect")
+    ("enb,rlc_bind_port", bpo::value<uint32_t>(&args->enb.rlc.rlc_bind_port)->default_value(10001), "Port for UE to connect")
     ("enb.phy_cell_id",   bpo::value<uint32_t>(&args->enb.pci)->default_value(0),                  "Physical Cell Identity (PCI)")
     ("enb.n_prb",         bpo::value<uint32_t>(&args->enb.n_prb)->default_value(25),               "Number of PRB")
     ("enb.nof_ports",     bpo::value<uint32_t>(&args->enb.nof_ports)->default_value(1),            "Number of ports")
@@ -386,7 +388,7 @@ void* receive_loop(void* arg) {
                _rlc->handle_abo(len);
                break;
             default:
-               _rlc->log_h->error("unknown pdu type 0x%x\n", *(uint32_t*)buffer[0]);
+               _rlc->log_h->error("unknown pdu type 0x%x\n", buffer[0]);
        }
    }
 }
@@ -396,9 +398,10 @@ void* receive_loop(void* arg) {
 void* send_loop(void* arg) {
     rlc* _rlc = (rlc*) arg;
     sdu_t sdu;
+    int temp;
     ssize_t tar_len;
     ssize_t send_len;
-    sockaddr addr;
+    sockaddr_in addr;
     while(true) {
         pthread_testcancel();
         if(_rlc->is_queue_empty()) {
@@ -421,17 +424,20 @@ void* send_loop(void* arg) {
              default:
                  _rlc->log_h->error("unknown sdu type 0x%x\n", sdu.sdu_type);
          }
-
-         if(!_rlc->get_addr(sdu.rnti, &addr))
+            if(sdu.rnti < 0xFFFD && !_rlc->get_addr(sdu.rnti, &addr)) {
+                send_len = sendto(_rlc->sock_fd, _rlc->send_buffer, tar_len, 0, (sockaddr*)&addr, sizeof(struct sockaddr)); 
+                if(send_len != tar_len)
+                     _rlc->log_h->error("try to send: %d, sent: %d\n", (int)tar_len, (int)send_len);
+                else
+                    _rlc->log_h->error("try to send msg to an Void.\n");
+            }
+            else if(sdu.rnti >= 0xFFFD){
+                temp = _rlc->send_broadcast(tar_len);
+                _rlc->log_h->debug("Broadcast to %d UEs\n", temp);
+            }
+            else {
              _rlc->log_h->error("Rnti %d dose not exist.\n", sdu.rnti);
-         else {
-         // TODO:paging should get a spcific SDU_TYPE? Or just using broadcast addr is OK?
-            send_len = sendto(_rlc->sock_fd, _rlc->send_buffer, tar_len, 0, &addr, sizeof(struct sockaddr)); 
-            if(send_len != tar_len)
-                 _rlc->log_h->error("try to send: %d, sent: %d\n", (int)tar_len, (int)send_len);
-            else
-                _rlc->log_h->error("try to send msg to an Void.\n");
-         }
+            }
          _rlc->pool->deallocate(sdu.sdu);
     }
 }

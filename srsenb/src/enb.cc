@@ -145,7 +145,7 @@ bool enb::init(all_args_t *args_)
   //memcpy(&phy_cfg.cell, &cell_cfg, sizeof(srslte_cell_t));
 
   // Init all layers   
-  rlc.init(&pdcp, &rrc, &rlc_log);
+  rlc.init(&pdcp, &rrc, &rrc, &rlc_log, args->enb.rlc.rlc_bind_addr, args->enb.rlc.rlc_bind_port);
   pdcp.init(&rlc, &rrc, &gtpu, &pdcp_log);
   rrc.init(&rrc_cfg, &rlc, &pdcp, &s1ap, &gtpu, &rrc_log);
   s1ap.init(args->enb.s1ap, &rrc, &s1ap_log);
