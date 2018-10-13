@@ -30,20 +30,20 @@
 #include <pthread.h>
 
 namespace srsenb {
-  
+
 void rlc::init(pdcp_interface_rlc* pdcp_, rrc_interface_rlc* rrc_, rrc_interface_mac* rrc_mac_, srslte::log* log_h_, std::string bind_addr, uint32_t bind_port)
 {
-  pdcp       = pdcp_; 
+  pdcp       = pdcp_;
   rrc        = rrc_;
   rrc_mac    = rrc_mac_;
-  log_h      = log_h_; 
+  log_h      = log_h_;
   pool       = srslte::byte_buffer_pool::get_instance();
   pthread_rwlock_init(&quelock, NULL);
   pthread_rwlock_init(&maplock, NULL);
   sock_fd = socket(AF_INET, SOCK_DGRAM, 0);
   struct sockaddr_in rlc_addr;
   int result = 0;
-  if(sock_fd < 0) 
+  if(sock_fd < 0)
       result = 1;
   else {
     memset(&rlc_addr, 0, sizeof(rlc_addr));
@@ -79,7 +79,7 @@ void rlc::stop()
 
 void rlc::add_user(uint16_t rnti)
 {
-    log_h->debug("Try to add user %d", rnti);
+    log_h->debug("Try to add user %d\n", rnti);
 // do nothing, because user has exsited.
 }
 
@@ -104,7 +104,7 @@ void rlc::clear_buffer(uint16_t rnti)
     temp_msg  = sdu_queue.front();
     if(temp_msg.rnti == rnti)
         pool->deallocate(temp_msg.sdu);
-    else 
+    else
         temp_queue.push(temp_msg);
     sdu_queue.pop();
   }
@@ -156,7 +156,7 @@ void rlc::write_sdu(uint16_t rnti, uint32_t lcid, srslte::byte_buffer_t* sdu)
 }
 
 bool rlc::is_queue_empty() {
-    return sdu_queue.empty(); 
+    return sdu_queue.empty();
 }
 
 sdu_t rlc::read_sdu() {
@@ -214,8 +214,8 @@ ssize_t rlc::comb_normal(sdu_t &sdu) {
     result += 2;
     send_buffer[result] = sdu.lcid;
     result += 1;
-    set_uint32(send_buffer + result, sdu.sdu->N_bytes);
     memcpy((send_buffer + result), sdu.sdu->msg, sdu.sdu->N_bytes);
+    result += sdu.sdu->N_bytes;
     return result;
 }
 
@@ -251,33 +251,31 @@ void rlc::handle_normal(ssize_t len) {
     offset += 1;
     uint16_t rnti = get_uint16(receive_buffer+offset);
     offset += 2;
-    uint32_t lcid = get_uint32(receive_buffer+offset);
-    offset += 4;
-    uint32_t in_len = get_uint32(receive_buffer+offset);
-    offset += 4;
-    if(len - offset != in_len) 
-        log_h->error("Wrong recv size, need %d, get %d\n", (int)in_len, (int)len);
-    else {
-        srslte::byte_buffer_t* sdu = pool->allocate("Receive UPD\n");
-        memcpy(sdu->buffer, receive_buffer + offset, in_len);
-        sdu->N_bytes = in_len;
-        pdcp->write_pdu(rnti, lcid, sdu);
-    }
+    uint32_t lcid = receive_buffer[offset];
+    offset += 1;
+    srslte::byte_buffer_t* sdu = pool->allocate("Receive UPD\n");
+    log_h->debug("Receive PDU from rnti:%d on lcid:%d, length:%d\n",rnti, lcid, (int)(len-offset));
+    //memcpy(sdu->buffer, receive_buffer + offset, len - offset);
+    memcpy(sdu->msg, receive_buffer + offset, len - offset);
+    sdu->N_bytes = len - offset;
+    pdcp->write_pdu(rnti, lcid, sdu);
 }
 void rlc::handle_ask(ssize_t len) {
     ssize_t offset = 0;
     offset += 1;
-    uint32_t ue_addr[4];
+    uint32_t ue_addr[6];
     uint16_t rnti = 0;
-    for(;offset < 5;offset ++) 
-        ue_addr[offset] = (uint32_t)receive_buffer[offset];
+    for(;offset < 7;offset ++)
+        ue_addr[offset-1] = (uint32_t)receive_buffer[offset];
+    log_h->debug("Receive ask_rnti IP:%d.%d.%d.%d:%d\n",ue_addr[0],ue_addr[1],ue_addr[2],ue_addr[3],(ue_addr[4] << 8) + ue_addr[5]);
+    printf("Receive ask_rnti IP:%d.%d.%d.%d:%d\n",ue_addr[0],ue_addr[1],ue_addr[2],ue_addr[3],(ue_addr[4] << 8) + ue_addr[5]);
     pthread_rwlock_wrlock(&maplock);
     for(uint16_t i = 1;i < 0xfffd;i ++)  {
         if(0 == users.count(i)) {
            struct sockaddr_in ue_addr_in;
            bzero(&ue_addr_in, sizeof(sockaddr_in));
            ue_addr_in.sin_family = AF_INET;
-           ue_addr_in.sin_port = htons(ue_addr[4]);
+           ue_addr_in.sin_port = htons((ue_addr[4] << 8) + ue_addr[5]);
            ue_addr_in.sin_addr.s_addr = (ue_addr[0] << 24) + (ue_addr[1] << 16) + (ue_addr[2] << 8) + ue_addr[3];
            users[i] = ue_addr_in;
            rrc_mac->add_user(i);
@@ -288,8 +286,13 @@ void rlc::handle_ask(ssize_t len) {
     pthread_rwlock_unlock(&maplock);
     pthread_rwlock_rdlock(&quelock);
     srslte::byte_buffer_t* sdu = pool->allocate("Send rnti\n");
+    set_uint16(sdu->msg, rnti);
+    printf("Send rnti:%d back\n", rnti);
+    for(int i = 0;i < 2;i ++)
+        printf("0x%x ",sdu->msg[i]);
+    printf("\n");
     if(rnti != 0)
-    sdu_queue.push(sdu_t(rnti, 0, sdu, SDU_TYPE_NORMAL));
+        sdu_queue.push(sdu_t(rnti, 0, sdu, SDU_TYPE_RETRNTI));
     pthread_rwlock_unlock(&quelock);
 
 }
