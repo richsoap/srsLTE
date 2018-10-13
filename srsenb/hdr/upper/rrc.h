@@ -145,6 +145,8 @@ public:
   // rrc_interface_rlc
   void read_pdu_bcch_dlsch(uint32_t sib_idx, uint8_t *payload);
   void read_pdu_pcch(uint8_t *payload, uint32_t buffer_size); 
+  uint32_t get_pcch_size();
+  uint32_t get_bcch_size(uint32_t sib);
   void max_retx_attempted(uint16_t rnti);
   
   // rrc_interface_s1ap

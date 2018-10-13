@@ -47,6 +47,11 @@
 #define PDU_TYPE_ASKRNTI 0x01
 #define PDU_TYPE_ABORNTI 0x02
 
+#define SRSENB_RLC_MRNTI 0xFFFD
+#define SRSENB_RLC_PRNTI 0xFFFE
+#define SRSENB_RLC_SIRNTI 0xFFFF
+
+
 namespace srsenb {
 struct sdu_t{
     uint16_t rnti;
@@ -113,6 +118,7 @@ public:
  void handle_abo(ssize_t len);
 
  int send_broadcast(ssize_t len);
+ void check_broadcast();
 
  //some functions for help
  void set_uint16(uint8_t* tar, uint16_t val);

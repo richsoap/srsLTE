@@ -617,84 +617,6 @@ srslte_common/fast:
 .PHONY : srslte_common/fast
 
 #=============================================================================
-# Target rules for targets named srslte_phy
-
-# Build rule for target.
-srslte_phy: cmake_check_build_system
-	$(MAKE) -f CMakeFiles/Makefile2 srslte_phy
-.PHONY : srslte_phy
-
-# fast build rule for target.
-srslte_phy/fast:
-	$(MAKE) -f lib/src/phy/CMakeFiles/srslte_phy.dir/build.make lib/src/phy/CMakeFiles/srslte_phy.dir/build
-.PHONY : srslte_phy/fast
-
-#=============================================================================
-# Target rules for targets named srslte_agc
-
-# Build rule for target.
-srslte_agc: cmake_check_build_system
-	$(MAKE) -f CMakeFiles/Makefile2 srslte_agc
-.PHONY : srslte_agc
-
-# fast build rule for target.
-srslte_agc/fast:
-	$(MAKE) -f lib/src/phy/agc/CMakeFiles/srslte_agc.dir/build.make lib/src/phy/agc/CMakeFiles/srslte_agc.dir/build
-.PHONY : srslte_agc/fast
-
-#=============================================================================
-# Target rules for targets named srslte_phy_common
-
-# Build rule for target.
-srslte_phy_common: cmake_check_build_system
-	$(MAKE) -f CMakeFiles/Makefile2 srslte_phy_common
-.PHONY : srslte_phy_common
-
-# fast build rule for target.
-srslte_phy_common/fast:
-	$(MAKE) -f lib/src/phy/common/CMakeFiles/srslte_phy_common.dir/build.make lib/src/phy/common/CMakeFiles/srslte_phy_common.dir/build
-.PHONY : srslte_phy_common/fast
-
-#=============================================================================
-# Target rules for targets named srslte_utils
-
-# Build rule for target.
-srslte_utils: cmake_check_build_system
-	$(MAKE) -f CMakeFiles/Makefile2 srslte_utils
-.PHONY : srslte_utils
-
-# fast build rule for target.
-srslte_utils/fast:
-	$(MAKE) -f lib/src/phy/utils/CMakeFiles/srslte_utils.dir/build.make lib/src/phy/utils/CMakeFiles/srslte_utils.dir/build
-.PHONY : srslte_utils/fast
-
-#=============================================================================
-# Target rules for targets named srslte_ue
-
-# Build rule for target.
-srslte_ue: cmake_check_build_system
-	$(MAKE) -f CMakeFiles/Makefile2 srslte_ue
-.PHONY : srslte_ue
-
-# fast build rule for target.
-srslte_ue/fast:
-	$(MAKE) -f lib/src/phy/ue/CMakeFiles/srslte_ue.dir/build.make lib/src/phy/ue/CMakeFiles/srslte_ue.dir/build
-.PHONY : srslte_ue/fast
-
-#=============================================================================
-# Target rules for targets named srslte_enb
-
-# Build rule for target.
-srslte_enb: cmake_check_build_system
-	$(MAKE) -f CMakeFiles/Makefile2 srslte_enb
-.PHONY : srslte_enb
-
-# fast build rule for target.
-srslte_enb/fast:
-	$(MAKE) -f lib/src/phy/enb/CMakeFiles/srslte_enb.dir/build.make lib/src/phy/enb/CMakeFiles/srslte_enb.dir/build
-.PHONY : srslte_enb/fast
-
-#=============================================================================
 # Target rules for targets named srslte_upper
 
 # Build rule for target.
@@ -781,12 +703,6 @@ help:
 	@echo "... srslte_asn1"
 	@echo "... gen_build_info"
 	@echo "... srslte_common"
-	@echo "... srslte_phy"
-	@echo "... srslte_agc"
-	@echo "... srslte_phy_common"
-	@echo "... srslte_utils"
-	@echo "... srslte_ue"
-	@echo "... srslte_enb"
 	@echo "... srslte_upper"
 	@echo "... srsenb"
 	@echo "... srsenb_upper"

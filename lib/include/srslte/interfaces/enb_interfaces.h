@@ -104,7 +104,9 @@ class rrc_interface_rlc
 {
 public:
   virtual void read_pdu_bcch_dlsch(uint32_t sib_index, uint8_t *payload) = 0;
+  virtual uint32_t get_bcch_size(uint32_t sib_index) = 0;
   virtual void read_pdu_pcch(uint8_t *payload, uint32_t payload_size) = 0; 
+  virtual uint32_t get_pcch_size() = 0;
   virtual void max_retx_attempted(uint16_t rnti) = 0;
 };
 

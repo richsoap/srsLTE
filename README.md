@@ -202,3 +202,8 @@ Support
 ========
 
 Mailing list: http://www.softwareradiosystems.com/mailman/listinfo/srslte-users
+
+# ToDo List
+- Read Page/Mch/Sib messages from RRC
+
+

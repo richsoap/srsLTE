@@ -128,6 +128,13 @@ void rrc::read_pdu_bcch_dlsch(uint32_t sib_index, uint8_t* payload)
   } 
 }
 
+uint32_t rrc::get_bcch_size(uint32_t sib_index) {
+    if(sib_index < LIBLTE_RRC_MAX_SIB) 
+        return sib_buffer[sib_index].N_bytes;
+    else
+        return 0;
+}
+
 void rrc::rl_failure(uint16_t rnti)
 {
   rrc_pdu p = {rnti, LCID_RLF_USER, NULL};
@@ -476,6 +483,9 @@ void rrc::read_pdu_pcch(uint8_t *payload, uint32_t buffer_size)
   pthread_mutex_unlock(&paging_mutex);
 }
 
+uint32_t rrc::get_pcch_size() {
+    return (bit_buf_paging.N_bits-1)/8+1;
+}
 
 /*******************************************************************************
   Private functions

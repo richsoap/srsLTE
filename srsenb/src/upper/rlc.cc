@@ -315,4 +315,32 @@ int rlc::send_broadcast(ssize_t len) {
     return result;
 }
 
+void rlc::check_broadcast() {
+    uint32_t sdu_size = rrc->get_pcch_size();
+    bool flag = false;
+    if(sdu_size != 0) {
+        srslte::byte_buffer_t* sdu = pool->allocate("Page SDU\n");
+        rrc->read_pdu_pcch(sdu->msg, sdu_size + 1);
+        sdu->N_bytes = sdu_size + 1;
+        pthread_rwlock_rdlock(&quelock);
+        flag = true;
+        sdu_queue.push(sdu_t(SRSENB_RLC_PRNTI, 0, sdu, SDU_TYPE_NORMAL));
+    }
+    for(int i = 0;i < LIBLTE_RRC_MAX_SIB;i ++) {
+        sdu_size = rrc->get_bcch_size(i);
+        if(sdu_size != 0) {
+            if(false == flag) {
+                pthread_rwlock_rdlock(&quelock);
+                flag = true;
+            }
+            srslte::byte_buffer_t* sdu = pool->allocate("SIB SDU\n");
+            rrc->read_pdu_bcch_dlsch(i, sdu->msg);
+            sdu->N_bytes = sdu_size;
+            sdu_queue.push(sdu_t(SRSENB_RLC_SIRNTI, i, sdu, SDU_TYPE_NORMAL));
+        }
+    }
+    if(true == flag)
+        pthread_rwlock_unlock(&quelock);
+}
+
 }

@@ -30,7 +30,6 @@ set(CMAKE_TARGET_LINKED_INFO_FILES
   "/home/richsoap/Workspaces/srsLTE/build/srsenb/src/upper/CMakeFiles/srsenb_upper.dir/DependInfo.cmake"
   "/home/richsoap/Workspaces/srsLTE/build/lib/src/common/CMakeFiles/srslte_common.dir/DependInfo.cmake"
   "/home/richsoap/Workspaces/srsLTE/build/lib/src/upper/CMakeFiles/srslte_upper.dir/DependInfo.cmake"
-  "/home/richsoap/Workspaces/srsLTE/build/lib/src/phy/CMakeFiles/srslte_phy.dir/DependInfo.cmake"
   "/home/richsoap/Workspaces/srsLTE/build/lib/src/asn1/CMakeFiles/srslte_asn1.dir/DependInfo.cmake"
   )
 

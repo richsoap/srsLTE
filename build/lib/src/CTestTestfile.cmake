@@ -6,6 +6,4 @@
 # testing this directory and lists subdirectories to be tested as well.
 subdirs(asn1)
 subdirs(common)
-subdirs(phy)
-subdirs(radio)
 subdirs(upper)

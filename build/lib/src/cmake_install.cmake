@@ -12,7 +12,7 @@ if(NOT DEFINED CMAKE_INSTALL_CONFIG_NAME)
     string(REGEX REPLACE "^[^A-Za-z0-9_]+" ""
            CMAKE_INSTALL_CONFIG_NAME "${BUILD_TYPE}")
   else()
-    set(CMAKE_INSTALL_CONFIG_NAME "Release")
+    set(CMAKE_INSTALL_CONFIG_NAME "Debug")
   endif()
   message(STATUS "Install configuration: \"${CMAKE_INSTALL_CONFIG_NAME}\"")
 endif()
@@ -36,8 +36,6 @@ if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for each subdirectory.
   include("/home/richsoap/Workspaces/srsLTE/build/lib/src/asn1/cmake_install.cmake")
   include("/home/richsoap/Workspaces/srsLTE/build/lib/src/common/cmake_install.cmake")
-  include("/home/richsoap/Workspaces/srsLTE/build/lib/src/phy/cmake_install.cmake")
-  include("/home/richsoap/Workspaces/srsLTE/build/lib/src/radio/cmake_install.cmake")
   include("/home/richsoap/Workspaces/srsLTE/build/lib/src/upper/cmake_install.cmake")
 
 endif()
