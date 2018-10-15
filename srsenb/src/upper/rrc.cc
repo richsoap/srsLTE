@@ -10,7 +10,9 @@ namespace srsenb {
 void rrc::init(rrc_cfg_t *cfg_,
         s1ap_interface_rrc* s1ap_,
         gtpu_interface_rrc* gtpu_,
-        srslte::log* log_rrc) {
+        srslte::log* log_rrc,
+        std::string bind_addr,
+        uint32_t bind_port) {
     s1ap = s1ap_;
     gtpu = gtpu_;
     rrc_log = log_rrc;
@@ -18,6 +20,30 @@ void rrc::init(rrc_cfg_t *cfg_,
 
     pthread_mutex_init(&user_mutex, NULL);
     pthread_mutex_init(&pagint_mutex, NULL);
+
+    sock_fd = socket(AF_INET, SOCK_DGRAM, 0);
+    struct sockaddr_in rrc_addr;
+    int result = 0;
+    if(sock_fd < 0)
+      result = 1;
+    else {
+      memset(&rrc_addr, 0, sizeof(rrc_addr));
+      rrc_addr.sin_family = AF_INET;
+      inet_pton(AF_INET, bind_addr.c_str(), &rrc_addr.sin_addr);
+      rrc_addr.sin_port = htons(bind_port);
+      if(bind(sock_fd, (struct sockaddr*) &rrc_addr, sizeof(rrc_addr)) < 0)
+        result = 2;
+    }
+    switch(result) {
+      case 1:
+        log_h->error("Invalid socket fd during rrc\n");
+        break;
+      case 2:
+        log_h->error("Bind error in rrc init\n");
+        break;
+      default:
+        log_h->debug("RRC bind to ip%s:%d\n", bind_addr.c_str(), bind_port);
+    }
 }
 
 void rrc::stop() {
@@ -121,12 +147,12 @@ void rrc::handle_attach(srslte::byte_buffer_t *sdu) {
     for(int i = 0;i < 6;i ++)
         ue_addr[i] = sdu->msg[i];
     sdu->msg += 6;
-    LIBLTE_S1AP_RRC_ESTABLISHMENT_CAUSE_ENUM cause = sdu->msg[0];
+    LIBLTE_S1AP_RRC_ESTABLISHMENT_CAUSE_ENUM cause = (LIBLTE_S1AP_RRC_ESTABLISHMENT_CAUSE_ENUM)sdu->msg[0];
     sdu->msg ++;
     sockaddr_in ue_addr_in;
     ue_addr_in.sin_family = AF_INET;
     ue_addr_in.sin_port = htonl((ue_addr[4] << 8) + ue_addr[5]);
-    ue_addr_in.sin_addr.sin = (ue_addr[0] << 24) + (ue_addr[1] << 16) + (ue_addr[2] << 8) + (ue_addr[3]);
+    ue_addr_in.sin_addr.s_addr = (ue_addr[0] << 24) + (ue_addr[1] << 16) + (ue_addr[2] << 8) + (ue_addr[3]);
     for(uint16_t rnti = 0;rnti < 0xFFFF;rnti ++) {
         if(rnti_map.count(rnti) == 0) {
             rnti_map[rnti] = id;
@@ -143,8 +169,64 @@ void rrc::handle_attach(srslte::byte_buffer_t *sdu) {
     log_h->error("\n");
 }
 
-bool rrc::send_downlink(srslte::byte_buffer_t *sdu) {
-    sdu->msg -= 
+void rrc::send_downlink(rrc_pdu pdu) {
+    if(pdu_queue.empty()) {
+      usleep(1000);
+      return;
+    }
+    rrc_pdu pdu = pdu_queue.front();
+    pdu_queue.wait_pop();
+    bool result = true;
+    if(pdu.rnti == 0) {
+      // TODO Paging Process
+    }
+    else {
+      if(rnti_map.count(pdu.rnti) != 0) {
+        pdu.pdu->msg -= 2;
+        pdu.pdu->msg[0] = (uint8_t)(pdu.lcid >> 8);
+        pdu.pdu->msg[1] = (uint8_t)pdu.lcid;
+        pdu.pdu->msg -= 15;
+        ueid id = ueid_map[pdu.rnti];
+        for(int i = 0;i < 15;i ++)
+          pdu.pdu->msg[i] = id.val[i];
+        pdu.pdu->msg -= 1;
+        pdu.pdu->msg[0] = 0x00;//Normal
+        pdu.pdu->N_bytes += 18;
+      }
+    }
+    sockaddr_in addr = addr_map[pdu.rnti];
+    ssize_t send_len = sendto(sock_fd, pdu.pdu->msg, pdu.pdu->N_bytes, 0, (sockaddr*)&addr, sizeof(struct sockaddr));
+
+    if((int)send_len != pdu.pdu->N_bytes) {
+      result = false;
+      log_h->warning("Send to rnti:%d failure, need to send:%d sent:%d\n", pdu.rnti, pdu.pdu->N_bytes, (int)send_len);
+    }
+    pool->deallocate(pdu.pdu);
+}
+
+void receive_uplink() {
+  // TODO How about static byte_buffer_t?
+  srslte::byte_buffer_t *sdu = pool->allocate();
+  ssize_t len = read(sock_fd, sdu->msg, SRSLTE_MAX_BUFFER_SIZE_BYTES);
+  sdu->N_bytes = (uint32_t)len - 1;
+  switch(sdu->msg[0]) {
+    case SRSENB_RRC_NORMAL:
+      sdu->msg ++;
+      sdu->N_bytes --;
+      handle_normal(sdu);
+      break;
+    case SRSENB_RRC_ATTACH:
+      sdu->msg ++;
+      sdu->N_bytes --;
+      handle_attach(sdu);
+      break;
+    case SRSENB_RRC_PAGING:
+      log_h->warning("ENB received Paging?\n");
+      break;
+    default:
+      log_h->warning("Unkown PDU Type 0x%x\n", sdu->msg[0]);
+  }
+  pool->deallocate(sdu);
 }
 
 }

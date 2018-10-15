@@ -39,9 +39,20 @@
 #include "common_enb.h"
 #include "rrc_metrics.h"
 
+#define SRSENB_RRC_NORMAL 0x00
+#define SRSENB_RRC_ATTACH 0x01
+#define SRSENB_RRC_PAGING 0x02
+
 namespace srsenb {
 
+typedef struct {
+  std::string rrc_bind_addr,
+  uint32_t rrc_bind_port;
+} rrc_args_t;
+
+
 class rrc : public rrc_interface_s1ap,
+            public pdcp_interface_gtpu
 {
 public:
 
@@ -51,14 +62,16 @@ public:
     s1ap = NULL;
     rrc_log = NULL;
   }
-  
+
   void init(rrc_cfg_t *cfg,
             s1ap_interface_rrc *s1ap,
             gtpu_interface_rrc *gtpu,
-            srslte::log *log_rrc);
-  
+            srslte::log *log_rrc,
+            std::string bind_addr,
+            uint32_t bind_port);
+
   void stop();
-  
+
   // rrc_interface_s1ap
   void write_dl_info(uint16_t rnti, srslte::byte_buffer_t *sdu);
   void release_complete(uint16_t rnti);
@@ -66,7 +79,9 @@ public:
   bool setup_ue_erabs(uint16_t rnti, LIBLTE_S1AP_MESSAGE_E_RABSETUPREQUEST_STRUCT *msg);
   bool release_erabs(uint32_t rnti);
   void add_paging_id(uint32_t ueid, LIBLTE_S1AP_UEPAGINGID_STRUCT UEPagingID);
-  
+  // pdcp_interface_gtpu
+  void write_sdu(uint16_t rnti, uint32_t lcid, srslte::byte_buffer_t *sdu);
+
   srslte::byte_buffer_pool  *pool;
   gtpu_interface_rrc   *gtpu;
   s1ap_interface_rrc   *s1ap;
@@ -94,16 +109,17 @@ public:
   map<uint16_t, ueid> rnti_map;
   map<ueid, uint16_t> ueid_map;
   map<uint16_t, uint8_t> page_map;
-  
+
   int sock_fd;
-  
+
   pthread_mutex_t user_mutex;
-  pthread_mutex_t paging_mutex; 
+  pthread_mutex_t paging_mutex;
 
   void handle_normal(srslte::byte_buffer_t *sdu);
   void handle_attach(srslte::byte_buffer_t *sdu);
 
-  bool send_downlink(srslte::byte_buffer_t *sdu);
+  bool send_downlink(rrc_pdu pdu);
+  void receive_uplink();
 };
 
 } // namespace srsenb

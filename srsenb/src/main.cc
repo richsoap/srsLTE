@@ -38,7 +38,7 @@
 #include <boost/program_options/parsers.hpp>
 #include <srsenb/hdr/enb.h>
 
-#include "srsenb/hdr/upper/rlc.h"
+#include "srsenb/hdr/upper/rrc.h"
 #include "srsenb/hdr/enb.h"
 #include "srsenb/hdr/metrics_stdout.h"
 
@@ -79,8 +79,8 @@ void parse_args(all_args_t *args, int argc, char* argv[]) {
     ("enb.mme_addr",      bpo::value<string>(&args->enb.s1ap.mme_addr)->default_value("127.0.0.1"),"IP address of MME for S1 connnection")
     ("enb.gtp_bind_addr", bpo::value<string>(&args->enb.s1ap.gtp_bind_addr)->default_value("192.168.3.1"), "Local IP address to bind for GTP connection")
     ("enb.s1c_bind_addr", bpo::value<string>(&args->enb.s1ap.s1c_bind_addr)->default_value("192.168.3.1"), "Local IP address to bind for S1AP connection")
-    ("enb.rlc_bind_addr", bpo::value<string>(&args->enb.rlc.rlc_bind_addr)->default_value("127.0.0.1"), "IP address for UE to connect")
-    ("enb.rlc_bind_port", bpo::value<uint32_t>(&args->enb.rlc.rlc_bind_port)->default_value(10001), "Port for UE to connect")
+    ("enb.rlc_bind_addr", bpo::value<string>(&args->enb.rrc.rrc_bind_addr)->default_value("127.0.0.1"), "IP address for UE to connect")
+    ("enb.rlc_bind_port", bpo::value<uint32_t>(&args->enb.rrc.rrc_bind_port)->default_value(10001), "Port for UE to connect")
     ("enb.phy_cell_id",   bpo::value<uint32_t>(&args->enb.pci)->default_value(0),                  "Physical Cell Identity (PCI)")
     ("enb.n_prb",         bpo::value<uint32_t>(&args->enb.n_prb)->default_value(25),               "Number of PRB")
     ("enb.nof_ports",     bpo::value<uint32_t>(&args->enb.nof_ports)->default_value(1),            "Number of ports")
@@ -91,32 +91,11 @@ void parse_args(all_args_t *args, int argc, char* argv[]) {
     ("enb_files.rr_config",  bpo::value<string>(&args->enb_files.rr_config)->default_value("rr.conf"),      "RR configuration files")
     ("enb_files.drb_config", bpo::value<string>(&args->enb_files.drb_config)->default_value("drb.conf"),      "DRB configuration files")
 
-    ("rf.dl_earfcn",      bpo::value<uint32_t>(&args->rf.dl_earfcn)->default_value(3400),  "Downlink EARFCN")
-    ("rf.ul_earfcn",      bpo::value<uint32_t>(&args->rf.ul_earfcn)->default_value(0),     "Uplink EARFCN (Default based on Downlink EARFCN)")
-    ("rf.rx_gain",        bpo::value<float>(&args->rf.rx_gain)->default_value(50),           "Front-end receiver gain")
-    ("rf.tx_gain",        bpo::value<float>(&args->rf.tx_gain)->default_value(70),           "Front-end transmitter gain")
-    ("rf.dl_freq",        bpo::value<float>(&args->rf.dl_freq)->default_value(-1),      "Downlink Frequency (if positive overrides EARFCN)")
-    ("rf.ul_freq",        bpo::value<float>(&args->rf.ul_freq)->default_value(-1),      "Uplink Frequency (if positive overrides EARFCN)")
-
-    ("rf.device_name",       bpo::value<string>(&args->rf.device_name)->default_value("auto"),   "Front-end device name")
-    ("rf.device_args",       bpo::value<string>(&args->rf.device_args)->default_value("auto"),   "Front-end device arguments")
-    ("rf.time_adv_nsamples", bpo::value<string>(&args->rf.time_adv_nsamples)->default_value("auto"),    "Transmission time advance")
-    ("rf.burst_preamble_us", bpo::value<string>(&args->rf.burst_preamble)->default_value("auto"), "Transmission time advance")
-
     ("pcap.enable",       bpo::value<bool>(&args->pcap.enable)->default_value(false),           "Enable MAC packet captures for wireshark")
     ("pcap.filename",     bpo::value<string>(&args->pcap.filename)->default_value("ue.pcap"),   "MAC layer capture filename")
 
     ("gui.enable",        bpo::value<bool>(&args->gui.enable)->default_value(false),            "Enable GUI plots")
 
-    ("log.phy_level",     bpo::value<string>(&args->log.phy_level),   "PHY log level")
-    ("log.phy_hex_limit", bpo::value<int>(&args->log.phy_hex_limit),  "PHY log hex dump limit")
-    ("log.phy_lib_level", bpo::value<string>(&args->log.phy_lib_level)->default_value("none"), "PHY lib log level")
-    ("log.mac_level",     bpo::value<string>(&args->log.mac_level),   "MAC log level")
-    ("log.mac_hex_limit", bpo::value<int>(&args->log.mac_hex_limit),  "MAC log hex dump limit")
-    ("log.rlc_level",     bpo::value<string>(&args->log.rlc_level),   "RLC log level")
-    ("log.rlc_hex_limit", bpo::value<int>(&args->log.rlc_hex_limit),  "RLC log hex dump limit")
-    ("log.pdcp_level",    bpo::value<string>(&args->log.pdcp_level),  "PDCP log level")
-    ("log.pdcp_hex_limit",bpo::value<int>(&args->log.pdcp_hex_limit), "PDCP log hex dump limit")
     ("log.rrc_level",     bpo::value<string>(&args->log.rrc_level),   "RRC log level")
     ("log.rrc_hex_limit", bpo::value<int>(&args->log.rrc_hex_limit),  "RRC log hex dump limit")
     ("log.gtpu_level",    bpo::value<string>(&args->log.gtpu_level),  "GTPU log level")
@@ -130,62 +109,12 @@ void parse_args(all_args_t *args, int argc, char* argv[]) {
     ("log.filename",      bpo::value<string>(&args->log.filename)->default_value("/tmp/ue.log"),"Log filename")
     ("log.file_max_size", bpo::value<int>(&args->log.file_max_size)->default_value(-1), "Maximum file size (in kilobytes). When passed, multiple files are created. Default -1 (single file)")
 
-    /* MCS section */
-   /* ("scheduler.pdsch_mcs",
-        bpo::value<int>(&args->expert.mac.sched.pdsch_mcs)->default_value(-1),
-        "Optional fixed PDSCH MCS (ignores reported CQIs if specified)")
-    ("scheduler.pdsch_max_mcs",
-        bpo::value<int>(&args->expert.mac.sched.pdsch_max_mcs)->default_value(-1),
-        "Optional PDSCH MCS limit")
-    ("scheduler.pusch_mcs",
-        bpo::value<int>(&args->expert.mac.sched.pusch_mcs)->default_value(-1),
-        "Optional fixed PUSCH MCS (ignores reported CQIs if specified)")
-    ("scheduler.pusch_max_mcs",
-        bpo::value<int>(&args->expert.mac.sched.pusch_max_mcs)->default_value(-1),
-        "Optional PUSCH MCS limit")
-    ("scheduler.nof_ctrl_symbols",
-        bpo::value<int>(&args->expert.mac.sched.nof_ctrl_symbols)->default_value(3),
-        "Number of control symbols")
-*/
-
     /* Expert section */
 
     ("expert.metrics_period_secs",
         bpo::value<float>(&args->expert.metrics_period_secs)->default_value(1.0),
         "Periodicity for metrics in seconds")
 
-   /* ("expert.pregenerate_signals",
-        bpo::value<bool>(&args->expert.phy.pregenerate_signals)->default_value(false),
-        "Pregenerate uplink signals after attach. Improves CPU performance.")
-
-    ("expert.pusch_max_its",
-        bpo::value<int>(&args->expert.phy.pusch_max_its)->default_value(4),
-        "Maximum number of turbo decoder iterations")
-
-    ("expert.tx_amplitude",
-        bpo::value<float>(&args->expert.phy.tx_amplitude)->default_value(0.6),
-        "Transmit amplitude factor")
-
-    ("expert.nof_phy_threads",
-        bpo::value<int>(&args->expert.phy.nof_phy_threads)->default_value(2),
-        "Number of PHY threads")
-
-    ("expert.link_failure_nof_err",
-        bpo::value<int>(&args->expert.mac.link_failure_nof_err)->default_value(100),
-        "Number of PUSCH failures after which a radio-link failure is triggered")
-
-    ("expert.max_prach_offset_us",
-        bpo::value<float>(&args->expert.phy.max_prach_offset_us)->default_value(30),
-        "Maximum allowed RACH offset (in us)")
-
-    ("expert.equalizer_mode",
-        bpo::value<string>(&args->expert.phy.equalizer_mode)->default_value("mmse"),
-        "Equalizer mode")
-
-    ("expert.estimator_fil_w",
-        bpo::value<float>(&args->expert.phy.estimator_fil_w)->default_value(0.1),
-        "Chooses the coefficients for the 3-tap channel estimator centered filter.")
-*/
     ("expert.rrc_inactivity_timer",
         bpo::value<uint32_t>(&args->expert.rrc_inactivity_timer)->default_value(60000),
         "Inactivity timer in ms")
@@ -197,12 +126,6 @@ void parse_args(all_args_t *args, int argc, char* argv[]) {
     ("expert.print_buffer_state",
         bpo::value<bool>(&args->expert.print_buffer_state)->default_value(false),
        "Prints on the console the buffer state every 10 seconds")
-
-   /* ("rf_calibration.tx_corr_dc_gain",  bpo::value<float>(&args->rf_cal.tx_corr_dc_gain)->default_value(0.0),  "TX DC offset gain correction")
-    ("rf_calibration.tx_corr_dc_phase", bpo::value<float>(&args->rf_cal.tx_corr_dc_phase)->default_value(0.0), "TX DC offset phase correction")
-    ("rf_calibration.tx_corr_iq_i",     bpo::value<float>(&args->rf_cal.tx_corr_iq_i)->default_value(0.0),     "TX IQ imbalance inphase correction")
-    ("rf_calibration.tx_corr_iq_q",     bpo::value<float>(&args->rf_cal.tx_corr_iq_q)->default_value(0.0),     "TX IQ imbalance quadrature correction")
-*/
   ;
 
   // Positional options - config file location
@@ -371,83 +294,18 @@ void* receive_loop(void* arg) {
    //rrc->read_pdu_bcch_dlsch(sib_index, payload); // have no idea
    //rrc->read_pdu_pcch(payload, buffer_size); // have no idea what this is
    //pdcp->write_pdu(rnti, lcid, sdu);
-   rlc* _rlc = (rlc*) arg;
-   ssize_t len;
-   uint8_t* buffer = _rlc->receive_buffer;
+   rrc* _rrc = (rrc*) arg;
    while(true) {
        pthread_testcancel();
-       len = read(_rlc->sock_fd, buffer, (ssize_t)_rlc->BUFFER_SIZE);
-       printf("Receive PDU type:0x%x len:%d\n", buffer[0], (int)len);
-       switch(buffer[0]) {
-           case PDU_TYPE_NORMAL:
-               _rlc->handle_normal(len);
-               break;
-            case PDU_TYPE_ASKRNTI:
-               _rlc->handle_ask(len);
-               break;
-            case PDU_TYPE_ABORNTI:
-               _rlc->handle_abo(len);
-               break;
-            default:
-               _rlc->log_h->error("unknown pdu type 0x%x\n", buffer[0]);
-       }
+       _rrc->receive_uplink();
    }
 }
 
-
-
 void* send_loop(void* arg) {
-    rlc* _rlc = (rlc*) arg;
-    sdu_t sdu;
-    int temp;
-    ssize_t tar_len;
-    ssize_t send_len;
-    sockaddr_in addr;
+    rrc* _rrc = (rrc*) arg;
     while(true) {
         pthread_testcancel();
-        if(_rlc->is_queue_empty()) {
-            usleep(2000);
-            continue;
-        }
-         sdu = _rlc->read_sdu();
-         switch(sdu.sdu_type) {
-             case SDU_TYPE_NORMAL:
-                 tar_len = _rlc->comb_normal(sdu);
-                 break;
-             case SDU_TYPE_RETRNTI:
-                 tar_len = _rlc->comb_ret(sdu);
-                 break;
-             case SDU_TYPE_UPDRNTI:
-                 tar_len = _rlc->comb_upd(sdu);
-                 break;
-             case SDU_TYPE_ABORNTI:
-                 tar_len = _rlc->comb_abo(sdu);
-             default:
-                 _rlc->log_h->error("unknown sdu type 0x%x\n", sdu.sdu_type);
-         }
-            if(sdu.rnti < 0xFFFD && _rlc->get_addr(sdu.rnti, &addr)) {
-                _rlc->log_h->debug("Try to send to rnti:%d, len:%d\n",sdu.rnti,tar_len);
-                ///
-                //
-                addr.sin_family = AF_INET;
-                addr.sin_addr.s_addr = inet_addr("127.0.0.1");
-                addr.sin_port = htons(6259);
-                //
-                //
-                send_len = sendto(_rlc->sock_fd, _rlc->send_buffer, tar_len, 0, (sockaddr*)&addr, sizeof(struct sockaddr));
-                if(send_len != tar_len)
-                     _rlc->log_h->error("try to send: %d, sent: %d\n", (int)tar_len, (int)send_len);
-                else
-                    _rlc->log_h->error("Send successfully.\n");
-            }
-            else if(sdu.rnti >= 0xFFFD){
-                temp = _rlc->send_broadcast(tar_len);
-                _rlc->log_h->debug("Broadcast to %d UEs\n", temp);
-            }
-            else {
-             _rlc->log_h->error("Rnti %d dose not exist.\n", sdu.rnti);
-            }
-         _rlc->pool->deallocate(sdu.sdu);
+        _rrc->send_downlink();
     }
 }
 
@@ -498,8 +356,8 @@ int main(int argc, char *argv[])
   pthread_t send_tid;
   pthread_t receive_tid;
   pthread_create(&input, NULL, &input_loop, &metrics);
-  pthread_create(&send_tid, NULL, &send_loop, &(enb->rlc));
-  pthread_create(&receive_tid, NULL, &receive_loop, &(enb->rlc));
+  pthread_create(&send_tid, NULL, &send_loop, &(enb->rrc));
+  pthread_create(&receive_tid, NULL, &receive_loop, &(enb->rrc));
 
   bool plot_started         = false;
   bool signals_pregenerated = false;

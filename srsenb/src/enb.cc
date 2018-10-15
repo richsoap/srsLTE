@@ -77,15 +77,13 @@ bool enb::init(all_args_t *args_)
     logger = &logger_file;
   }
 
-  // Create array of pointers to phy_logs 
+  // Create array of pointers to phy_logs
   /*for (int i=0;i<args->expert.phy.nof_phy_threads;i++) {
     srslte::log_filter *mylog = new srslte::log_filter;
     char tmp[16];
     sprintf(tmp, "PHY%d",i);
     mylog->init(tmp, logger, true);
   }*/
-  rlc_log.init("RLC ", logger);
-  pdcp_log.init("PDCP", logger);
   rrc_log.init("RRC ", logger);
   gtpu_log.init("GTPU", logger);
   s1ap_log.init("S1AP", logger);
@@ -95,17 +93,10 @@ bool enb::init(all_args_t *args_)
   pool->set_log(&pool_log);
 
   // Init logs
-  rlc_log.set_level(level(args->log.rlc_level));
-  pdcp_log.set_level(level(args->log.pdcp_level));
   rrc_log.set_level(level(args->log.rrc_level));
   gtpu_log.set_level(level(args->log.gtpu_level));
   s1ap_log.set_level(level(args->log.s1ap_level));
 
-  /*for (int i=0;i<args->expert.phy.nof_phy_threads;i++) {
-    ((srslte::log_filter*) phy_log[i])->set_hex_limit(args->log.phy_hex_limit);
-  }*/
-  rlc_log.set_hex_limit(args->log.rlc_hex_limit);
-  pdcp_log.set_hex_limit(args->log.pdcp_hex_limit);
   rrc_log.set_hex_limit(args->log.rrc_hex_limit);
   gtpu_log.set_hex_limit(args->log.gtpu_hex_limit);
   s1ap_log.set_hex_limit(args->log.s1ap_hex_limit);
@@ -116,41 +107,39 @@ bool enb::init(all_args_t *args_)
  //
  //
 
-  srslte_cell_t cell_cfg; 
-  rrc_cfg_t     rrc_cfg; 
-  
+  srslte_cell_t cell_cfg;
+  rrc_cfg_t     rrc_cfg;
+
   if (parse_cell_cfg(args, &cell_cfg)) {
     fprintf(stderr, "Error parsing Cell configuration\n");
-    return false; 
+    return false;
   }
   /*if (parse_sibs(args, &rrc_cfg, &phy_cfg)) {
     fprintf(stderr, "Error parsing SIB configuration\n");
-    return false; 
+    return false;
   }*/
   if (parse_rr(args, &rrc_cfg)) {
     fprintf(stderr, "Error parsing Radio Resources configuration\n");
-    return false; 
+    return false;
   }
   if (parse_drb(args, &rrc_cfg)) {
     fprintf(stderr, "Error parsing DRB configuration\n");
-    return false; 
+    return false;
   }
 
   rrc_cfg.inactivity_timeout_ms = args->expert.rrc_inactivity_timer;
   rrc_cfg.enable_mbsfn =  args->expert.enable_mbsfn;
  // end here
 
-  // Copy cell struct to rrc and phy 
+  // Copy cell struct to rrc and phy
   memcpy(&rrc_cfg.cell, &cell_cfg, sizeof(srslte_cell_t));
   //memcpy(&phy_cfg.cell, &cell_cfg, sizeof(srslte_cell_t));
 
-  // Init all layers   
-  rlc.init(&pdcp, &rrc, &rrc, &rlc_log, args->enb.rlc.rlc_bind_addr, args->enb.rlc.rlc_bind_port);
-  pdcp.init(&rlc, &rrc, &gtpu, &pdcp_log);
-  rrc.init(&rrc_cfg, &rlc, &pdcp, &s1ap, &gtpu, &rrc_log);
+  // Init all layers
+  rrc.init(&rrc_cfg, &s1ap, &gtpu, &rrc_log, args->enb.rrc.rrc_bind_addr, args->enb.rrc.rrc_bind_port);
   s1ap.init(args->enb.s1ap, &rrc, &s1ap_log);
-  gtpu.init(args->enb.s1ap.gtp_bind_addr, args->enb.s1ap.mme_addr, &pdcp, &gtpu_log, args->expert.enable_mbsfn);
-  
+  gtpu.init(args->enb.s1ap.gtp_bind_addr, args->enb.s1ap.mme_addr, &rrc, &gtpu_log, args->expert.enable_mbsfn);
+
   started = true;
   return true;
 }
@@ -191,7 +180,7 @@ bool enb::get_metrics(enb_metrics_t &m)
   rrc.get_metrics(m.rrc);
   s1ap.get_metrics(m.s1ap);
 
-  m.running = started;  
+  m.running = started;
   return true;
 }
 
