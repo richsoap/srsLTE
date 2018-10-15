@@ -88,6 +88,7 @@ void rrc::release_complete(uint16_t rnti) {
 }
 
 bool rrc::setup_ue_ctxt(uint16_t rnti, LIBLTE_S1AP_MESSAGE_INITIALCONTEXTSETUPREQUEST_STRUCT *msg) {
+  // TODO add PDU to PDU Queue
     if(rnti_map.count(rnti) != 0)
         return true;
     else
@@ -170,12 +171,12 @@ void rrc::handle_attach(srslte::byte_buffer_t *sdu) {
 }
 
 void rrc::send_downlink(rrc_pdu pdu) {
+  // TODO use ul prase to do
     if(pdu_queue.empty()) {
       usleep(1000);
       return;
     }
-    rrc_pdu pdu = pdu_queue.front();
-    pdu_queue.wait_pop();
+    rrc_pdu pdu = pdu_queue.wait_pop();
     bool result = true;
     if(pdu.rnti == 0) {
       // TODO Paging Process
