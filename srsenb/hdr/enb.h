@@ -105,7 +105,6 @@ typedef struct {
 typedef struct {
   enb_args_t    enb;
   enb_files_t   enb_files;
-  rf_args_t     rf;
   //rf_cal_t      rf_cal;
   pcap_args_t   pcap;
   log_args_t    log;
@@ -141,7 +140,7 @@ public:
 
   void pregenerate_signals(bool enable);
 
-  srsenb::rlc rlc;
+  srsenb::rrc rrc;
 
 private:
   static enb *instance;
@@ -152,12 +151,6 @@ private:
 
   virtual ~enb();
 
-  //srslte::radio radio;
-  //srsenb::phy phy;
-  //srsenb::mac mac;
-  //srslte::mac_pcap mac_pcap;
-  srsenb::pdcp pdcp;
-  srsenb::rrc rrc;
   srsenb::gtpu gtpu;
   srsenb::s1ap s1ap;
 
@@ -191,8 +184,6 @@ private:
   int parse_sib9(std::string filename, LIBLTE_RRC_SYS_INFO_BLOCK_TYPE_9_STRUCT *data);
   int parse_sib13(std::string filename, LIBLTE_RRC_SYS_INFO_BLOCK_TYPE_13_STRUCT *data);
   //int parse_sibs(all_args_t *args, rrc_cfg_t *rrc_cfg, phy_cfg_t *phy_config_common);
-  int parse_rr(all_args_t *args, rrc_cfg_t *rrc_cfg);
-  int parse_drb(all_args_t *args, rrc_cfg_t *rrc_cfg);
   bool sib_is_present(LIBLTE_RRC_SCHEDULING_INFO_STRUCT *sched_info, uint32_t nof_sched_info, LIBLTE_RRC_SIB_TYPE_ENUM sib_num);
   int parse_cell_cfg(all_args_t *args, srslte_cell_t *cell);
 };

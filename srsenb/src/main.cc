@@ -208,21 +208,6 @@ void parse_args(all_args_t *args, int argc, char* argv[]) {
 
   // Apply all_level to any unset layers
   if (vm.count("log.all_level")) {
-    if(!vm.count("log.phy_level")) {
-      args->log.phy_level = args->log.all_level;
-    }
-    if (!vm.count("log.phy_lib_level")) {
-      args->log.phy_lib_level = args->log.all_level;
-    }
-    if(!vm.count("log.mac_level")) {
-      args->log.mac_level = args->log.all_level;
-    }
-    if(!vm.count("log.rlc_level")) {
-      args->log.rlc_level = args->log.all_level;
-    }
-    if(!vm.count("log.pdcp_level")) {
-      args->log.pdcp_level = args->log.all_level;
-    }
     if(!vm.count("log.rrc_level")) {
       args->log.rrc_level = args->log.all_level;
     }
@@ -236,18 +221,6 @@ void parse_args(all_args_t *args, int argc, char* argv[]) {
 
   // Apply all_hex_limit to any unset layers
   if (vm.count("log.all_hex_limit")) {
-    if(!vm.count("log.phy_hex_limit")) {
-      args->log.phy_hex_limit = args->log.all_hex_limit;
-    }
-    if(!vm.count("log.mac_hex_limit")) {
-      args->log.mac_hex_limit = args->log.all_hex_limit;
-    }
-    if(!vm.count("log.rlc_hex_limit")) {
-      args->log.rlc_hex_limit = args->log.all_hex_limit;
-    }
-    if(!vm.count("log.pdcp_hex_limit")) {
-      args->log.pdcp_hex_limit = args->log.all_hex_limit;
-    }
     if(!vm.count("log.rrc_hex_limit")) {
       args->log.rrc_hex_limit = args->log.all_hex_limit;
     }

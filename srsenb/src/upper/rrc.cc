@@ -9,11 +9,13 @@ namespace srsenb {
 
 void rrc::init(s1ap_interface_rrc* s1ap_,
         gtpu_interface_rrc* gtpu_,
+        gtpu_interface_pdcp* gtpu_pdcp_,
         srslte::log* log_rrc,
         std::string bind_addr,
         uint32_t bind_port) {
     s1ap = s1ap_;
     gtpu = gtpu_;
+    gtpu_pdcp = gtpu_pdcp_;
     log_h = log_rrc;
     pool = srslte::byte_buffer_pool::get_instance();
 
@@ -90,9 +92,10 @@ bool rrc::setup_ue_ctxt(uint16_t rnti, LIBLTE_S1AP_MESSAGE_INITIALCONTEXTSETUPRE
   // TODO add PDU to PDU Queue
     if(rnti_map.count(rnti) != 0) {
         LIBLTE_S1AP_E_RABTOBESETUPLISTCTXTSUREQ_STRUCT *e = &msg->E_RABToBeSetupListCtxtSUReq;
+        LIBLTE_S1AP_MESSAGE_INITIALCONTEXTSETUPRESPONSE_STRUCT res;
         res.ext = false;
         res.E_RABFailedToSetupListCtxtSURes_present = false;
-        res.CriticalityDiagnositics_present = false;
+        res.CriticalityDiagnostics_present = false;
         res.E_RABSetupListCtxtSURes.len = 0;
         res.E_RABFailedToSetupListCtxtSURes.len = 0;
         for(uint32_t i = 0;i < e->len; i ++) {
@@ -103,7 +106,7 @@ bool rrc::setup_ue_ctxt(uint16_t rnti, LIBLTE_S1AP_MESSAGE_INITIALCONTEXTSETUPRE
             uint8_t lcid = id - 2;
             LIBLTE_S1AP_TRANSPORTLAYERADDRESS_STRUCT *addr = &erab->transportLayerAddress;
             uint8_t *bit_ptr = addr->buffer;
-            uint32_t addr_ = libit_bits_2_value(&bit_ptr, addr->n_bits);
+            uint32_t addr_ = liblte_bits_2_value(&bit_ptr, addr->n_bits);
             gtpu->add_bearer(rnti, lcid, addr_, teid_out, &teid_in);
             ///////////////////// for complete
             uint32_t j = res.E_RABSetupListCtxtSURes.len ++;
@@ -111,7 +114,7 @@ bool rrc::setup_ue_ctxt(uint16_t rnti, LIBLTE_S1AP_MESSAGE_INITIALCONTEXTSETUPRE
             res.E_RABSetupListCtxtSURes.buffer[j].iE_Extensions_present = false;
             res.E_RABSetupListCtxtSURes.buffer[j].e_RAB_ID.ext = false;
             res.E_RABSetupListCtxtSURes.buffer[j].e_RAB_ID.E_RAB_ID = id;
-            uint32_to_uint8(teid_in, res.E_RABSetupListBearerSURes.buffer[j].gTP_TEID.buffer);
+            uint32_to_uint8(teid_in, res.E_RABSetupListCtxtSURes.buffer[j].gTP_TEID.buffer);
         }
         s1ap->ue_ctxt_setup_complete(rnti, &res);
         return true;
@@ -122,26 +125,27 @@ bool rrc::setup_ue_ctxt(uint16_t rnti, LIBLTE_S1AP_MESSAGE_INITIALCONTEXTSETUPRE
 bool rrc::setup_ue_erabs(uint16_t rnti, LIBLTE_S1AP_MESSAGE_E_RABSETUPREQUEST_STRUCT *msg) {
     if(rnti_map.count(rnti) != 0) {
         LIBLTE_S1AP_E_RABTOBESETUPLISTBEARERSUREQ_STRUCT *e = &msg->E_RABToBeSetupListBearerSUReq;
-        LIBLTE_S1AP_MESSAGE_INITIALCONTEXTSETUPRESPONSE_STRUCT res;
+        LIBLTE_S1AP_MESSAGE_E_RABSETUPRESPONSE_STRUCT res;
         res.ext = false;
         res.E_RABFailedToSetupListBearerSURes.len = 0;
         res.E_RABSetupListBearerSURes.len = 0;
-        res.CriticalityDiagnositics_present = false;
+        res.CriticalityDiagnostics_present = false;
         res.E_RABFailedToSetupListBearerSURes_present = false;
 
         for(uint32_t i = 0;i < e->len;i ++) {
             LIBLTE_S1AP_E_RABTOBESETUPITEMBEARERSUREQ_STRUCT *erab = &e->buffer[i];
             uint8_t id = erab->e_RAB_ID.E_RAB_ID;
+            uint32_t teid_out, teid_in;
             uint8_to_uint32(erab->gTP_TEID.buffer, &teid_out);
             uint8_t lcid = id - 2;
             LIBLTE_S1AP_TRANSPORTLAYERADDRESS_STRUCT *addr = &erab->transportLayerAddress;
             uint8_t *bit_ptr = addr->buffer;
-            uint32_t addr_ = libit_bits_2_value(&bit_ptr, addr->n_bits);
-            gtpu->add_bearer(id, lcid, addr_, teid_out, &teid_in)
+            uint32_t addr_ = liblte_bits_2_value(&bit_ptr, addr->n_bits);
+            gtpu->add_bearer(id, lcid, addr_, teid_out, &teid_in);
             //////////////// for Complete
-            res.ERABSetupListBearerSURes_present = true;
+            res.E_RABSetupListBearerSURes_present = true;
             uint32_t j = res.E_RABSetupListBearerSURes.len ++;
-            res.E_RABSetupListBearerSURes.buffer[j].exti = false;
+            res.E_RABSetupListBearerSURes.buffer[j].ext = false;
             res.E_RABSetupListBearerSURes.buffer[j].iE_Extensions_present = false;
             res.E_RABSetupListBearerSURes.buffer[j].e_RAB_ID.ext = false;
             res.E_RABSetupListBearerSURes.buffer[j].e_RAB_ID.E_RAB_ID = id;
@@ -154,8 +158,9 @@ bool rrc::setup_ue_erabs(uint16_t rnti, LIBLTE_S1AP_MESSAGE_E_RABSETUPREQUEST_ST
 }
 
 bool rrc::release_erabs(uint32_t rnti) {
-    rrc_pdu p = {rnti, SRSENB_DL_RELEASE_ERAB, NULL};
+    rrc_pdu p = {(uint16_t)rnti, SRSENB_DL_RELEASE_ERAB, NULL};
     pdu_queue.push(p);
+    return true;
 }
 void rrc::add_paging_id(uint32_t ueid, LIBLTE_S1AP_UEPAGINGID_STRUCT UEPagingID) {
     // TODO So, what should I do when paging??
@@ -167,7 +172,7 @@ void rrc::add_paging_id(uint32_t ueid, LIBLTE_S1AP_UEPAGINGID_STRUCT UEPagingID)
 //
 ///////////////////////////////////////
 
-void rrc::write_pdu(uint16_t rnti, uint32_t lcid, srslte::byte_buffer_t *pdu) {
+void rrc::write_sdu(uint16_t rnti, uint32_t lcid, srslte::byte_buffer_t *pdu) {
     rrc_pdu p = {rnti, lcid, pdu};
     pdu_queue.push(p);
 }
@@ -206,8 +211,10 @@ void rrc::handle_data(srslte::byte_buffer_t *sdu) {
     uint8_t lcid = sdu->msg[0];
     sdu->msg ++;
     sdu->N_bytes --;
-    if(ueid_map.count(id) == 1)
-        write_pdu(ueid_map[id], (uint32_t)lcid, sdu);
+    if(ueid_map.count(id) == 1) {
+        gtpu_pdcp->write_pdu(ueid_map[id], (uint32_t)lcid, sdu);
+    }
+    // TODO should we dallocate sdu here?
 }
 
 void rrc::handle_attach(srslte::byte_buffer_t *sdu) {
@@ -241,7 +248,7 @@ void rrc::handle_attach(srslte::byte_buffer_t *sdu) {
     log_h->error("\n");
 }
 
-void rrc::send_normal(rrc_pdu pdu) {
+bool rrc::send_normal(rrc_pdu pdu) {
     if(rnti_map.count(pdu.rnti) != 0) {
         append_head(pdu);
         pdu.pdu->msg[0] = SRSENB_RRC_NORMAL;//Normal
@@ -270,9 +277,9 @@ bool rrc::send_paging(rrc_pdu pdu) {
 void rrc::append_head(rrc_pdu pdu) {
     pdu.pdu->msg -= 2;
     pdu.pdu->msg[0] = (uint8_t)(pdu.lcid >> 8);
-    pdu.pdu->msg[1] = (uint18_t)pdu.lcid;
+    pdu.pdu->msg[1] = (uint8_t)pdu.lcid;
     pdu.pdu->msg -= 15;
-    ueid id = ueid_map[pdu.rnti];
+    ueid id = rnti_map[pdu.rnti];
     for(int i = 0;i < 15;i ++)
         pdu.pdu->msg[i] = id[i];
     pdu.pdu->msg -= 1;
@@ -287,7 +294,7 @@ void rrc::send_downlink() {
             send_paging(pdu);
             break;
         case SRSENB_DL_RELEASE_USER:
-            gtpu->rem_user(pdu.rnti)
+            gtpu->rem_user(pdu.rnti);
             break;
         case SRSENB_DL_RELEASE_ERAB:
             gtpu->rem_bearer(pdu.rnti, pdu.lcid & 0x0000FFFF);
@@ -297,12 +304,11 @@ void rrc::send_downlink() {
                 send_normal(pdu);
             else
                 log_h->error("Invalid DL LCID:0x%x", pdu.lcid);
-        }
     }
     pool->deallocate(pdu.pdu);
 }
 
-void receive_uplink() {
+void rrc::receive_uplink() {
   // TODO How about static byte_buffer_t?
   srslte::byte_buffer_t *sdu = pool->allocate();
   ssize_t len = read(sock_fd, sdu->msg, SRSLTE_MAX_BUFFER_SIZE_BYTES);

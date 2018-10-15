@@ -67,11 +67,13 @@ public:
     pool = NULL;
     gtpu = NULL;
     s1ap = NULL;
+    gtpu_pdcp = NULL;
     log_h = NULL;
   }
 
   void init(s1ap_interface_rrc *s1ap,
             gtpu_interface_rrc *gtpu,
+            gtpu_interface_pdcp *gtpu_pdcp,
             srslte::log *log_rrc,
             std::string bind_addr,
             uint32_t bind_port);
@@ -91,6 +93,7 @@ public:
   srslte::byte_buffer_pool  *pool;
   gtpu_interface_rrc   *gtpu;
   s1ap_interface_rrc   *s1ap;
+  gtpu_interface_pdcp  *gtpu_pdcp;
   srslte::log          *log_h;
 
   typedef struct {
@@ -126,12 +129,13 @@ public:
 
   void handle_normal(srslte::byte_buffer_t *sdu);
   void handle_attach(srslte::byte_buffer_t *sdu);
+  void handle_data(srslte::byte_buffer_t *sdu);
 
   bool send_normal(rrc_pdu pdu);
   bool send_paging(rrc_pdu pdu);
   void append_head(rrc_pdu pdu);
 
-  bool send_downlink();
+  void send_downlink();
   void receive_uplink();
 };
 

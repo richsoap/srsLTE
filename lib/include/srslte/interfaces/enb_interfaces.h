@@ -45,88 +45,11 @@ namespace srsenb {
 /* Interface MAC -> PHY */
 /* Interface RRC -> PHY */
 
-// RLC interface for PDCP
-class rlc_interface_pdcp
-{
-public:
-  /* PDCP calls RLC to push an RLC SDU. SDU gets placed into the RLC buffer and MAC pulls
-   * RLC PDUs according to TB size. */
-  virtual void write_sdu(uint16_t rnti, uint32_t lcid,  srslte::byte_buffer_t *sdu) = 0;
-  //virtual bool rb_is_um(uint16_t rnti, uint32_t lcid) = 0;
-};
-
-// RLC interface for RRC
-class rlc_interface_rrc
-{
-public:
-  virtual void clear_buffer(uint16_t rnti) = 0;
-  virtual void add_user(uint16_t rnti) = 0; 
-  virtual void rem_user(uint16_t rnti) = 0; 
-  virtual void add_bearer(uint16_t rnti, uint32_t lcid) = 0;
-  virtual void add_bearer(uint16_t rnti, uint32_t lcid, srslte::srslte_rlc_config_t cnfg) = 0;
-  virtual void add_bearer_mrb(uint16_t rnti, uint32_t lcid) = 0;
-};
-
 // PDCP interface for GTPU
 class pdcp_interface_gtpu
 {
 public:
   virtual void write_sdu(uint16_t rnti, uint32_t lcid, srslte::byte_buffer_t *sdu) = 0;
-};
-
-// PDCP interface for RRC
-class pdcp_interface_rrc
-{
-public:
-  virtual void reset(uint16_t rnti) = 0;
-  virtual void add_user(uint16_t rnti) = 0; 
-  virtual void rem_user(uint16_t rnti) = 0; 
-  virtual void write_sdu(uint16_t rnti, uint32_t lcid, srslte::byte_buffer_t *sdu) = 0;
-  virtual void add_bearer(uint16_t rnti, uint32_t lcid, srslte::srslte_pdcp_config_t cnfg) = 0;
-  virtual void config_security(uint16_t rnti, 
-                               uint32_t lcid,
-                               uint8_t *k_rrc_enc_,
-                               uint8_t *k_rrc_int_,
-                               srslte::CIPHERING_ALGORITHM_ID_ENUM cipher_algo_,
-                               srslte::INTEGRITY_ALGORITHM_ID_ENUM integ_algo_) = 0;
-};
-
-// PDCP interface for RLC
-class pdcp_interface_rlc
-{
-public:
-  /* RLC calls PDCP to push a PDCP PDU. */
-  virtual void write_pdu(uint16_t rnti, uint32_t lcid, srslte::byte_buffer_t *sdu) = 0;
-};
-
-// RRC interface for RLC
-class rrc_interface_rlc
-{
-public:
-  virtual void read_pdu_bcch_dlsch(uint32_t sib_index, uint8_t *payload) = 0;
-  virtual uint32_t get_bcch_size(uint32_t sib_index) = 0;
-  virtual void read_pdu_pcch(uint8_t *payload, uint32_t payload_size) = 0; 
-  virtual uint32_t get_pcch_size() = 0;
-  virtual void max_retx_attempted(uint16_t rnti) = 0;
-};
-
-// RRC interface for MAC
-class rrc_interface_mac
-{
-public:
-  /* Radio Link failure */ 
-  virtual void rl_failure(uint16_t rnti) = 0; 
-  virtual void add_user(uint16_t rnti) = 0;
-  virtual void upd_user(uint16_t new_rnti, uint16_t old_rnti) = 0;
-  virtual void set_activity_user(uint16_t rnti) = 0; 
-  virtual bool is_paging_opportunity(uint32_t tti, uint32_t *payload_len) = 0; 
-};
-
-// RRC interface for PDCP
-class rrc_interface_pdcp
-{
-public:
-  virtual void write_pdu(uint16_t rnti, uint32_t lcid, srslte::byte_buffer_t *pdu) = 0;  
 };
 
 // RRC interface for S1AP

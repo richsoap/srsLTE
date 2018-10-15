@@ -99,7 +99,7 @@ private:
   uint32_t *nof_subframes; 
 };
 
-class field_qci : public parser::field_itf
+/*class field_qci : public parser::field_itf
 {
 public:
   field_qci(rrc_cfg_qci_t *cfg_) { cfg = cfg_; }
@@ -111,7 +111,7 @@ public:
   int parse(Setting &root);    
 private: 
   rrc_cfg_qci_t *cfg; 
-};
+};*/
 
 
 }

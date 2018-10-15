@@ -108,35 +108,16 @@ bool enb::init(all_args_t *args_)
  //
 
   srslte_cell_t cell_cfg;
-  rrc_cfg_t     rrc_cfg;
 
   if (parse_cell_cfg(args, &cell_cfg)) {
     fprintf(stderr, "Error parsing Cell configuration\n");
     return false;
   }
-  /*if (parse_sibs(args, &rrc_cfg, &phy_cfg)) {
-    fprintf(stderr, "Error parsing SIB configuration\n");
-    return false;
-  }*/
-  if (parse_rr(args, &rrc_cfg)) {
-    fprintf(stderr, "Error parsing Radio Resources configuration\n");
-    return false;
-  }
-  if (parse_drb(args, &rrc_cfg)) {
-    fprintf(stderr, "Error parsing DRB configuration\n");
-    return false;
-  }
 
-  rrc_cfg.inactivity_timeout_ms = args->expert.rrc_inactivity_timer;
-  rrc_cfg.enable_mbsfn =  args->expert.enable_mbsfn;
  // end here
 
-  // Copy cell struct to rrc and phy
-  memcpy(&rrc_cfg.cell, &cell_cfg, sizeof(srslte_cell_t));
-  //memcpy(&phy_cfg.cell, &cell_cfg, sizeof(srslte_cell_t));
-
   // Init all layers
-  rrc.init(&rrc_cfg, &s1ap, &gtpu, &rrc_log, args->enb.rrc.rrc_bind_addr, args->enb.rrc.rrc_bind_port);
+  rrc.init(&s1ap, &gtpu, &gtpu, &rrc_log, args->enb.rrc.rrc_bind_addr, args->enb.rrc.rrc_bind_port);
   s1ap.init(args->enb.s1ap, &rrc, &s1ap_log);
   gtpu.init(args->enb.s1ap.gtp_bind_addr, args->enb.s1ap.mme_addr, &rrc, &gtpu_log, args->expert.enable_mbsfn);
 
@@ -157,8 +138,6 @@ void enb::stop()
     gtpu.stop();
     usleep(50000);
 
-    rlc.stop();
-    pdcp.stop();
     rrc.stop();
 
     usleep(10000);
@@ -176,8 +155,8 @@ void enb::print_pool() {
 
 bool enb::get_metrics(enb_metrics_t &m)
 {
-  //mac.get_metrics(m.mac);
-  rrc.get_metrics(m.rrc);
+  //rrc.get_metrics(m.rrc);
+  //TODO make get_metrics work
   s1ap.get_metrics(m.s1ap);
 
   m.running = started;
