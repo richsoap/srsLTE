@@ -291,9 +291,6 @@ void sig_int_handler(int signo)
 }
 
 void* receive_loop(void* arg) {
-   //rrc->read_pdu_bcch_dlsch(sib_index, payload); // have no idea
-   //rrc->read_pdu_pcch(payload, buffer_size); // have no idea what this is
-   //pdcp->write_pdu(rnti, lcid, sdu);
    rrc* _rrc = (rrc*) arg;
    while(true) {
        pthread_testcancel();
@@ -302,6 +299,7 @@ void* receive_loop(void* arg) {
 }
 
 void* send_loop(void* arg) {
+    // TODO parse here
     rrc* _rrc = (rrc*) arg;
     while(true) {
         pthread_testcancel();

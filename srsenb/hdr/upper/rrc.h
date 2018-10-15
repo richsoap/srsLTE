@@ -42,11 +42,18 @@
 #define SRSENB_RRC_NORMAL 0x00
 #define SRSENB_RRC_ATTACH 0x01
 #define SRSENB_RRC_PAGING 0x02
+#define SRSENB_RRC_RELEASE 0x03
+#define SRSENB_RRC_DATA 0x04
+
+#define SRSENB_DL_PAGING 0xFFFF0000
+#define SRSENB_DL_NORMAL 0xFFFF0001
+#define SRSENB_DL_RELEASE_USER 0xFFFF0002
+#define SRSENB_DL_RELEASE_ERAB 0xFFFF0003
 
 namespace srsenb {
 
 typedef struct {
-  std::string rrc_bind_addr,
+  std::string rrc_bind_addr;
   uint32_t rrc_bind_port;
 } rrc_args_t;
 
@@ -56,15 +63,14 @@ class rrc : public rrc_interface_s1ap,
 {
 public:
 
-  rrc() : {
+  rrc(){
     pool = NULL;
     gtpu = NULL;
     s1ap = NULL;
-    rrc_log = NULL;
+    log_h = NULL;
   }
 
-  void init(rrc_cfg_t *cfg,
-            s1ap_interface_rrc *s1ap,
+  void init(s1ap_interface_rrc *s1ap,
             gtpu_interface_rrc *gtpu,
             srslte::log *log_rrc,
             std::string bind_addr,
@@ -85,7 +91,7 @@ public:
   srslte::byte_buffer_pool  *pool;
   gtpu_interface_rrc   *gtpu;
   s1ap_interface_rrc   *s1ap;
-  srslte::log          *rrc_log;
+  srslte::log          *log_h;
 
   typedef struct {
     uint16_t                rnti;
@@ -93,22 +99,25 @@ public:
     srslte::byte_buffer_t*  pdu;
   }rrc_pdu;
 
-  typedef struct {
+  typedef struct ueid_t{
     uint8_t value[15];
-    bool operator < (const ueid &ue) const {
+    bool operator < (const ueid_t &ue) const {
         for(int i = 0;i < 15;i ++) {
             if(value[i] < ue.value[i])
                 return true;
         }
         return false;
     }
+    uint8_t& operator [] (int i) {
+        return value[i];
+    }
   }ueid;
 
   srslte::block_queue<rrc_pdu> pdu_queue;
-  map<uint16_t, sockaddr_in> addr_map;
-  map<uint16_t, ueid> rnti_map;
-  map<ueid, uint16_t> ueid_map;
-  map<uint16_t, uint8_t> page_map;
+  std::map<uint16_t, sockaddr_in> addr_map;
+  std::map<uint16_t, ueid> rnti_map;
+  std::map<ueid, uint16_t> ueid_map;
+  std::map<uint16_t, uint8_t> page_map;
 
   int sock_fd;
 
@@ -118,7 +127,11 @@ public:
   void handle_normal(srslte::byte_buffer_t *sdu);
   void handle_attach(srslte::byte_buffer_t *sdu);
 
-  bool send_downlink(rrc_pdu pdu);
+  bool send_normal(rrc_pdu pdu);
+  bool send_paging(rrc_pdu pdu);
+  void append_head(rrc_pdu pdu);
+
+  bool send_downlink();
   void receive_uplink();
 };
 
