@@ -23,6 +23,7 @@ void rrc::init(s1ap_interface_rrc* s1ap_,
     pthread_mutex_init(&paging_mutex, NULL);
 
     sock_fd = socket(AF_INET, SOCK_DGRAM, 0);
+    send_fd = socket(AF_INET, SOCK_DGRAM, 0);
     struct sockaddr_in rrc_addr;
     int result = 0;
     if(sock_fd < 0)
@@ -34,6 +35,9 @@ void rrc::init(s1ap_interface_rrc* s1ap_,
       rrc_addr.sin_port = htons(bind_port);
       if(bind(sock_fd, (struct sockaddr*) &rrc_addr, sizeof(rrc_addr)) < 0)
         result = 2;
+      rrc_addr.sin_port = htons(bind_port + 1);
+      if(bind(send_fd, (struct sockaddr*) &rrc_addr, sizeof(rrc_addr)) < 0)
+          result = 2;
     }
     switch(result) {
       case 1:
@@ -68,6 +72,7 @@ void rrc::stop() {
 ///////////////////////////////////////
 void rrc::write_dl_info(uint16_t rnti, srslte::byte_buffer_t *sdu) {
     rrc_pdu p = {rnti, RB_ID_SRB1, sdu};
+    printf("S1ap write dl info rnti:%d len:%d\n", rnti, sdu->N_bytes);
     pdu_queue.push(p);
 }
 
@@ -153,8 +158,7 @@ bool rrc::setup_ue_erabs(uint16_t rnti, LIBLTE_S1AP_MESSAGE_E_RABSETUPREQUEST_ST
         }
         s1ap->ue_erab_setup_complete(rnti, &res);
     }
-    else
-        return false;
+    return false;
 }
 
 bool rrc::release_erabs(uint32_t rnti) {
@@ -186,10 +190,10 @@ void rrc::write_sdu(uint16_t rnti, uint32_t lcid, srslte::byte_buffer_t *pdu) {
 
 void rrc::handle_normal(srslte::byte_buffer_t *sdu) {
     ueid id;
+    sdu->msg += 6;
     for(int i = 0;i < 15;i ++)
         id[i] = sdu->msg[i];
     sdu->msg += 15;
-    sdu->msg += 6;
     sdu->N_bytes -= 21;
     if(ueid_map.count(id) == 1)
         s1ap->write_pdu(ueid_map[id],sdu);
@@ -219,25 +223,30 @@ void rrc::handle_data(srslte::byte_buffer_t *sdu) {
 
 void rrc::handle_attach(srslte::byte_buffer_t *sdu) {
     ueid id;
-    for(int i = 0;i < 15;i ++)
-        id[i] = sdu->msg[i];
-    sdu->msg += 15;
-    uint32_t ue_addr[6];
+        uint32_t ue_addr[6];
     for(int i = 0;i < 6;i ++)
         ue_addr[i] = sdu->msg[i];
     sdu->msg += 6;
-    LIBLTE_S1AP_RRC_ESTABLISHMENT_CAUSE_ENUM cause = (LIBLTE_S1AP_RRC_ESTABLISHMENT_CAUSE_ENUM)sdu->msg[0];
-    sdu->msg ++;
+    for(int i = 0;i < 15;i ++)
+        id[i] = sdu->msg[i];
+    sdu->msg += 15;
+//abort lcid
+    sdu->msg += 2;
+    LIBLTE_S1AP_RRC_ESTABLISHMENT_CAUSE_ENUM cause;
+    memcpy(&cause, sdu->msg, 4);
+    sdu->msg += 4;
     sockaddr_in ue_addr_in;
     ue_addr_in.sin_family = AF_INET;
-    ue_addr_in.sin_port = htonl((ue_addr[4] << 8) + ue_addr[5]);
-    ue_addr_in.sin_addr.s_addr = (ue_addr[0] << 24) + (ue_addr[1] << 16) + (ue_addr[2] << 8) + (ue_addr[3]);
-    for(uint16_t rnti = 0;rnti < 0xFFFF;rnti ++) {
+    ue_addr_in.sin_port = htons((uint16_t)(ue_addr[4] << 8) + (uint16_t)ue_addr[5]);
+    ue_addr_in.sin_addr.s_addr = (ue_addr[3] << 24) + (ue_addr[2] << 16) + (ue_addr[1] << 8) + (ue_addr[0]);
+    printf("add %s:%d\n", inet_ntoa(ue_addr_in.sin_addr), ue_addr_in.sin_port);
+    for(uint16_t rnti = 1;rnti < 0xFFFF;rnti ++) {
         if(rnti_map.count(rnti) == 0) {
+            printf("Send initial_ue\n");
             rnti_map[rnti] = id;
             ueid_map[id] = rnti;
             addr_map[rnti] = ue_addr_in;
-            sdu->N_bytes -= 22;
+            sdu->N_bytes -= 26;
             s1ap->initial_ue(rnti, cause, sdu);
             return;
         }
@@ -251,11 +260,18 @@ void rrc::handle_attach(srslte::byte_buffer_t *sdu) {
 bool rrc::send_normal(rrc_pdu pdu) {
     if(rnti_map.count(pdu.rnti) != 0) {
         append_head(pdu);
-        pdu.pdu->msg[0] = SRSENB_RRC_NORMAL;//Normal
+        if(pdu.lcid < 3)
+            pdu.pdu->msg[0] = SRSENB_RRC_NORMAL;//Normal
+        else
+            pdu.pdu->msg[0] = SRSENB_RRC_DATA;
         sockaddr_in addr = addr_map[pdu.rnti];
+        printf("Send to %s:0x%x: ", inet_ntoa(addr.sin_addr), addr.sin_port);
+        for(int i = 0;i < pdu.pdu->N_bytes; i ++)
+            printf("0x%x ", pdu.pdu->msg[i]);
+        printf("\n");
         ssize_t send_len = sendto(sock_fd, pdu.pdu->msg, pdu.pdu->N_bytes, 0, (sockaddr*)&addr, sizeof(struct sockaddr));
-        if((int)send_len != pdu.pdu->N_bytes)
-            log_h->warning("Send to rnti:%d failure, need to send:%d sent:%d\n", pdu.rnti, pdu.pdu->N_bytes, (int)send_len);
+        //ssize_t send_len = sendto(send_fd, pdu.pdu->msg, pdu.pdu->N_bytes, 0, (sockaddr*)&addr, sizeof(struct sockaddr));
+        printf("Sent len:%d\n", (int)send_len);
         return true;
     }
     return false;
@@ -267,7 +283,7 @@ bool rrc::send_paging(rrc_pdu pdu) {
         pdu.pdu->msg[0] = SRSENB_RRC_PAGING;
         sockaddr_in addr = addr_map[pdu.rnti];
         ssize_t send_len = sendto(sock_fd, pdu.pdu->msg, pdu.pdu->N_bytes, 0, (sockaddr*)&addr, sizeof(struct sockaddr));
-        if((int)send_len != pdu.pdu->N_bytes)
+        if((uint32_t)send_len != pdu.pdu->N_bytes)
             log_h->warning("Send to rnti:%d failure, need to send:%d sent:%d\n", pdu.rnti, pdu.pdu->N_bytes, (int)send_len);
         return true;
     }
@@ -276,8 +292,8 @@ bool rrc::send_paging(rrc_pdu pdu) {
 
 void rrc::append_head(rrc_pdu pdu) {
     pdu.pdu->msg -= 2;
-    pdu.pdu->msg[0] = (uint8_t)(pdu.lcid >> 8);
-    pdu.pdu->msg[1] = (uint8_t)pdu.lcid;
+    pdu.pdu->msg[0] = (uint8_t)pdu.lcid;
+    pdu.pdu->msg[1] = (uint8_t)(pdu.lcid >> 8);
     pdu.pdu->msg -= 15;
     ueid id = rnti_map[pdu.rnti];
     for(int i = 0;i < 15;i ++)
@@ -300,7 +316,7 @@ void rrc::send_downlink() {
             gtpu->rem_bearer(pdu.rnti, pdu.lcid & 0x0000FFFF);
             break;
         default:
-            if(pdu.lcid & 0xFFFF0000 == 0)
+            if(pdu.lcid < 0x00010000)
                 send_normal(pdu);
             else
                 log_h->error("Invalid DL LCID:0x%x", pdu.lcid);
@@ -312,7 +328,12 @@ void rrc::receive_uplink() {
   // TODO How about static byte_buffer_t?
   srslte::byte_buffer_t *sdu = pool->allocate();
   ssize_t len = read(sock_fd, sdu->msg, SRSLTE_MAX_BUFFER_SIZE_BYTES);
-  sdu->N_bytes = (uint32_t)len - 1;
+  sdu->N_bytes = (uint32_t) len;
+  printf("Receive Uplink len:%d type:0x%x\n", (int)len, sdu->msg[0]);
+  for(int i = 0;i < sdu->N_bytes; i ++)
+      printf("0x%x ", sdu->msg[i]);
+  printf("\n");
+  printf("After printing\n");
   switch(sdu->msg[0]) {
     case SRSENB_RRC_NORMAL:
       sdu->msg ++;

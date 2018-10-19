@@ -39,16 +39,17 @@
 #include "common_enb.h"
 #include "rrc_metrics.h"
 
-#define SRSENB_RRC_NORMAL 0x00
 #define SRSENB_RRC_ATTACH 0x01
-#define SRSENB_RRC_PAGING 0x02
-#define SRSENB_RRC_RELEASE 0x03
-#define SRSENB_RRC_DATA 0x04
+#define SRSENB_RRC_NORMAL 0x02
+#define SRSENB_RRC_DATA 0x03
+#define SRSENB_RRC_PAGING 0x04
+#define SRSENB_RRC_RELEASE 0x05
 
-#define SRSENB_DL_PAGING 0xFFFF0000
-#define SRSENB_DL_NORMAL 0xFFFF0001
-#define SRSENB_DL_RELEASE_USER 0xFFFF0002
-#define SRSENB_DL_RELEASE_ERAB 0xFFFF0003
+#define SRSENB_DL_PAGING 0xFFFF0001
+#define SRSENB_DL_NORMAL 0xFFFF0002
+#define SRSENB_DL_DATA 0xFFFF0003
+#define SRSENB_DL_RELEASE_USER 0xFFFF0004
+#define SRSENB_DL_RELEASE_ERAB 0xFFFF0005
 
 namespace srsenb {
 
@@ -123,6 +124,7 @@ public:
   std::map<uint16_t, uint8_t> page_map;
 
   int sock_fd;
+  int send_fd;
 
   pthread_mutex_t user_mutex;
   pthread_mutex_t paging_mutex;
