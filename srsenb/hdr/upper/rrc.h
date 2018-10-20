@@ -97,25 +97,39 @@ public:
   gtpu_interface_pdcp  *gtpu_pdcp;
   srslte::log          *log_h;
 
-  typedef struct {
-    uint16_t                rnti;
-    uint32_t                lcid;
-    srslte::byte_buffer_t*  pdu;
-  }rrc_pdu;
-
   typedef struct ueid_t{
     uint8_t value[15];
     bool operator < (const ueid_t &ue) const {
-        for(int i = 0;i < 15;i ++) {
-            if(value[i] < ue.value[i])
-                return true;
-        }
-        return false;
+        int i;
+        for(i = 0;i < 14 && ue.value[i] == value[i];i ++);
+        return value[i] < ue.value[i];
     }
     uint8_t& operator [] (int i) {
         return value[i];
     }
   }ueid;
+
+
+  typedef struct rrc_receive_head_t {
+    uint8_t type;
+    uint32_t ip;
+    uint16_t port;
+    struct ueid_t id;
+    uint16_t lcid;
+    LIBLTE_S1AP_RRC_ESTABLISHMENT_CAUSE_ENUM cause;
+  } rrc_receive_head;
+
+  typedef struct rrc_send_head_t {
+    uint8_t type;
+    struct ueid_t id;
+    uint16_t lcid;
+  } rrc_send_head;
+
+  typedef struct {
+    uint16_t                rnti;
+    uint32_t                lcid;
+    srslte::byte_buffer_t*  pdu;
+  }rrc_pdu;
 
   srslte::block_queue<rrc_pdu> pdu_queue;
   std::map<uint16_t, sockaddr_in> addr_map;

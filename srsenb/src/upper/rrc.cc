@@ -112,6 +112,14 @@ bool rrc::setup_ue_ctxt(uint16_t rnti, LIBLTE_S1AP_MESSAGE_INITIALCONTEXTSETUPRE
             LIBLTE_S1AP_TRANSPORTLAYERADDRESS_STRUCT *addr = &erab->transportLayerAddress;
             uint8_t *bit_ptr = addr->buffer;
             uint32_t addr_ = liblte_bits_2_value(&bit_ptr, addr->n_bits);
+            LIBLTE_S1AP_NAS_PDU_STRUCT* nas_pdu = erab->nAS_PDU_present? &erab->nAS_PDU:NULL;
+            if(nas_pdu != NULL) {
+                srslte::byte_buffer_t *sdu = pool->allocate();
+                memcpy(sdu->msg, nas_pdu->buffer, nas_pdu->n_octets);
+                sdu->N_bytes = nas_pdu->n_octets;
+                rrc_pdu pdu = {rnti, RB_ID_SRB1, sdu};
+                pdu_queue.push(pdu);
+            }
             gtpu->add_bearer(rnti, lcid, addr_, teid_out, &teid_in);
             ///////////////////// for complete
             uint32_t j = res.E_RABSetupListCtxtSURes.len ++;
@@ -147,7 +155,13 @@ bool rrc::setup_ue_erabs(uint16_t rnti, LIBLTE_S1AP_MESSAGE_E_RABSETUPREQUEST_ST
             uint8_t *bit_ptr = addr->buffer;
             uint32_t addr_ = liblte_bits_2_value(&bit_ptr, addr->n_bits);
             gtpu->add_bearer(id, lcid, addr_, teid_out, &teid_in);
-            //////////////// for Complete
+            LIBLTE_S1AP_NAS_PDU_STRUCT* nas_pdu = &erab->nAS_PDU;
+            srslte::byte_buffer_t *sdu = pool->allocate();
+            memcpy(sdu->msg, nas_pdu->buffer, nas_pdu->n_octets);
+            sdu->N_bytes = nas_pdu->n_octets;
+            rrc_pdu pdu = {rnti, RB_ID_SRB1, sdu};
+            pdu_queue.push(pdu);
+            /////////////// for Complete
             res.E_RABSetupListBearerSURes_present = true;
             uint32_t j = res.E_RABSetupListBearerSURes.len ++;
             res.E_RABSetupListBearerSURes.buffer[j].ext = false;
@@ -195,8 +209,16 @@ void rrc::handle_normal(srslte::byte_buffer_t *sdu) {
         id[i] = sdu->msg[i];
     sdu->msg += 15;
     sdu->N_bytes -= 21;
+    uint16_t lcid;
+    memcpy(&lcid, sdu->msg, 2);
+    sdu->msg += 2;
+    sdu->msg += 4;
+    sdu->N_bytes -= 6;
     if(ueid_map.count(id) == 1)
-        s1ap->write_pdu(ueid_map[id],sdu);
+        if(lcid < 3)
+            s1ap->write_pdu(ueid_map[id],sdu);
+        else
+            gtpu_pdcp->write_pdu(ueid_map[id], lcid, sdu);
     else {
         log_h->error("Unknown ueid:");
         for(int i = 0;i < 15;i ++)
@@ -246,7 +268,7 @@ void rrc::handle_attach(srslte::byte_buffer_t *sdu) {
             rnti_map[rnti] = id;
             ueid_map[id] = rnti;
             addr_map[rnti] = ue_addr_in;
-            sdu->N_bytes -= 26;
+            sdu->N_bytes -= 27;
             s1ap->initial_ue(rnti, cause, sdu);
             return;
         }
@@ -266,7 +288,7 @@ bool rrc::send_normal(rrc_pdu pdu) {
             pdu.pdu->msg[0] = SRSENB_RRC_DATA;
         sockaddr_in addr = addr_map[pdu.rnti];
         printf("Send to %s:0x%x: ", inet_ntoa(addr.sin_addr), addr.sin_port);
-        for(int i = 0;i < pdu.pdu->N_bytes; i ++)
+        for(uint32_t i = 0;i < pdu.pdu->N_bytes; i ++)
             printf("0x%x ", pdu.pdu->msg[i]);
         printf("\n");
         ssize_t send_len = sendto(sock_fd, pdu.pdu->msg, pdu.pdu->N_bytes, 0, (sockaddr*)&addr, sizeof(struct sockaddr));
@@ -291,7 +313,13 @@ bool rrc::send_paging(rrc_pdu pdu) {
 }
 
 void rrc::append_head(rrc_pdu pdu) {
-    pdu.pdu->msg -= 2;
+    rrc_send_head head;
+    head.lcid = pdu.lcid;
+    head.id = rnti_map[pdu.rnti];
+    pdu.pdu->msg -= sizeof(rrc_send_head);
+    pdu.pdu->N_bytes += sizeof(rrc_send_head);
+    memcpy(pdu.pdu->msg, &head, sizeof(rrc_send_head));
+    /*pdu.pdu->msg -= 2;
     pdu.pdu->msg[0] = (uint8_t)pdu.lcid;
     pdu.pdu->msg[1] = (uint8_t)(pdu.lcid >> 8);
     pdu.pdu->msg -= 15;
@@ -299,7 +327,7 @@ void rrc::append_head(rrc_pdu pdu) {
     for(int i = 0;i < 15;i ++)
         pdu.pdu->msg[i] = id[i];
     pdu.pdu->msg -= 1;
-    pdu.pdu->N_bytes += 18;
+    pdu.pdu->N_bytes += 18;*/
 }
 
 void rrc::send_downlink() {
@@ -329,11 +357,8 @@ void rrc::receive_uplink() {
   srslte::byte_buffer_t *sdu = pool->allocate();
   ssize_t len = read(sock_fd, sdu->msg, SRSLTE_MAX_BUFFER_SIZE_BYTES);
   sdu->N_bytes = (uint32_t) len;
-  printf("Receive Uplink len:%d type:0x%x\n", (int)len, sdu->msg[0]);
-  for(int i = 0;i < sdu->N_bytes; i ++)
-      printf("0x%x ", sdu->msg[i]);
-  printf("\n");
-  printf("After printing\n");
+  rrc_receive_head head;
+  memcpy(&head, sdu->msg, sizeof(rrc_receive_head));
   switch(sdu->msg[0]) {
     case SRSENB_RRC_NORMAL:
       sdu->msg ++;
