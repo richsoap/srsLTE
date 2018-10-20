@@ -202,80 +202,49 @@ void rrc::write_sdu(uint16_t rnti, uint32_t lcid, srslte::byte_buffer_t *pdu) {
 //
 ///////////////////////////////////////
 
-void rrc::handle_normal(srslte::byte_buffer_t *sdu) {
-    ueid id;
-    sdu->msg += 6;
-    for(int i = 0;i < 15;i ++)
-        id[i] = sdu->msg[i];
-    sdu->msg += 15;
-    sdu->N_bytes -= 21;
-    uint16_t lcid;
-    memcpy(&lcid, sdu->msg, 2);
-    sdu->msg += 2;
-    sdu->msg += 4;
-    sdu->N_bytes -= 6;
-    if(ueid_map.count(id) == 1)
-        if(lcid < 3)
-            s1ap->write_pdu(ueid_map[id],sdu);
+void rrc::handle_normal(rrc_receive_head head, srslte::byte_buffer_t *sdu) {
+    if(ueid_map.count(head.id) == 1)
+        if(head.lcid < 3)
+            s1ap->write_pdu(ueid_map[head.id],sdu);
         else
-            gtpu_pdcp->write_pdu(ueid_map[id], lcid, sdu);
+            gtpu_pdcp->write_pdu(ueid_map[head.id], head.lcid, sdu);
     else {
         log_h->error("Unknown ueid:");
         for(int i = 0;i < 15;i ++)
-            log_h->error("%d ",id[i]);
+            log_h->error("%d ",head.id[i]);
         log_h->error("\n");
     }
 }
 
-void rrc::handle_data(srslte::byte_buffer_t *sdu) {
-    ueid id;
-    for(int i = 0;i < 15;i ++)
-        id[i] = sdu->msg[i];
-    sdu->msg += 15;
-    sdu->msg += 6;
-    sdu->N_bytes -= 21;
-    uint8_t lcid = sdu->msg[0];
-    sdu->msg ++;
-    sdu->N_bytes --;
-    if(ueid_map.count(id) == 1) {
-        gtpu_pdcp->write_pdu(ueid_map[id], (uint32_t)lcid, sdu);
+void rrc::handle_data(rrc_receive_head head, srslte::byte_buffer_t *sdu) {
+    if(ueid_map.count(head.id) == 1) {
+        gtpu_pdcp->write_pdu(ueid_map[head.id], head.lcid, sdu);
     }
     // TODO should we dallocate sdu here?
 }
 
-void rrc::handle_attach(srslte::byte_buffer_t *sdu) {
-    ueid id;
-        uint32_t ue_addr[6];
-    for(int i = 0;i < 6;i ++)
-        ue_addr[i] = sdu->msg[i];
-    sdu->msg += 6;
-    for(int i = 0;i < 15;i ++)
-        id[i] = sdu->msg[i];
-    sdu->msg += 15;
-//abort lcid
-    sdu->msg += 2;
-    LIBLTE_S1AP_RRC_ESTABLISHMENT_CAUSE_ENUM cause;
-    memcpy(&cause, sdu->msg, 4);
-    sdu->msg += 4;
+void rrc::handle_attach(rrc_receive_head head, srslte::byte_buffer_t *sdu) {
     sockaddr_in ue_addr_in;
     ue_addr_in.sin_family = AF_INET;
-    ue_addr_in.sin_port = htons((uint16_t)(ue_addr[4] << 8) + (uint16_t)ue_addr[5]);
-    ue_addr_in.sin_addr.s_addr = (ue_addr[3] << 24) + (ue_addr[2] << 16) + (ue_addr[1] << 8) + (ue_addr[0]);
+    ue_addr_in.sin_port = htons(((uint16_t)head.port[0] << 8) + (uint16_t)head.port[1]);
+    ue_addr_in.sin_addr.s_addr = (((uint32_t)head.ip[3]) << 24) +
+                                 (((uint32_t)head.ip[2]) << 16) +
+                                 (((uint32_t)head.ip[1]) << 8) +
+                                 (uint32_t)head.ip[0];
     printf("add %s:%d\n", inet_ntoa(ue_addr_in.sin_addr), ue_addr_in.sin_port);
     for(uint16_t rnti = 1;rnti < 0xFFFF;rnti ++) {
         if(rnti_map.count(rnti) == 0) {
             printf("Send initial_ue\n");
-            rnti_map[rnti] = id;
-            ueid_map[id] = rnti;
+            rnti_map[rnti] = head.id;
+            ueid_map[head.id] = rnti;
             addr_map[rnti] = ue_addr_in;
-            sdu->N_bytes -= 27;
-            s1ap->initial_ue(rnti, cause, sdu);
+            s1ap->initial_ue(rnti, head.cause, sdu);
             return;
         }
     }
     log_h->error("Rnti map is full for id:");
     for(int i = 0;i < 15;i ++)
-        log_h->error("%d ", id[i]);
+        log_h->error("%d ", head.id[i]);
     log_h->error("\n");
 }
 
@@ -316,8 +285,8 @@ void rrc::append_head(rrc_pdu pdu) {
     rrc_send_head head;
     head.lcid = pdu.lcid;
     head.id = rnti_map[pdu.rnti];
-    pdu.pdu->msg -= sizeof(rrc_send_head);
-    pdu.pdu->N_bytes += sizeof(rrc_send_head);
+    pdu.pdu->msg -= RRC_SEND_LEN;
+    pdu.pdu->N_bytes += RRC_SEND_LEN;
     memcpy(pdu.pdu->msg, &head, sizeof(rrc_send_head));
     /*pdu.pdu->msg -= 2;
     pdu.pdu->msg[0] = (uint8_t)pdu.lcid;
@@ -356,19 +325,18 @@ void rrc::receive_uplink() {
   // TODO How about static byte_buffer_t?
   srslte::byte_buffer_t *sdu = pool->allocate();
   ssize_t len = read(sock_fd, sdu->msg, SRSLTE_MAX_BUFFER_SIZE_BYTES);
+  printf("Receive Uplink len:%d\n", (uint32_t) len);
   sdu->N_bytes = (uint32_t) len;
   rrc_receive_head head;
   memcpy(&head, sdu->msg, sizeof(rrc_receive_head));
-  switch(sdu->msg[0]) {
+  sdu->msg += RRC_RECEIVE_LEN;
+  sdu->N_bytes -= RRC_RECEIVE_LEN;
+  switch(head.type) {
     case SRSENB_RRC_NORMAL:
-      sdu->msg ++;
-      sdu->N_bytes --;
-      handle_normal(sdu);
+      handle_normal(head, sdu);
       break;
     case SRSENB_RRC_ATTACH:
-      sdu->msg ++;
-      sdu->N_bytes --;
-      handle_attach(sdu);
+      handle_attach(head, sdu);
       break;
     case SRSENB_RRC_PAGING:
       log_h->warning("ENB received Paging?\n");
@@ -379,9 +347,7 @@ void rrc::receive_uplink() {
       log_h->warning("Release the rnti\n");
       break;
     case SRSENB_RRC_DATA:
-      sdu->msg ++;
-      sdu->N_bytes --;
-      handle_data(sdu);
+      handle_data(head, sdu);
     default:
       log_h->warning("Unkown PDU Type 0x%x\n", sdu->msg[0]);
   }

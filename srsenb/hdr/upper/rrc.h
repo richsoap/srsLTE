@@ -51,6 +51,9 @@
 #define SRSENB_DL_RELEASE_USER 0xFFFF0004
 #define SRSENB_DL_RELEASE_ERAB 0xFFFF0005
 
+#define RRC_RECEIVE_LEN sizeof(rrc_receive_head)
+#define RRC_SEND_LEN sizeof(rrc_send_head)
+
 namespace srsenb {
 
 typedef struct {
@@ -112,8 +115,8 @@ public:
 
   typedef struct rrc_receive_head_t {
     uint8_t type;
-    uint32_t ip;
-    uint16_t port;
+    uint8_t ip[4];
+    uint8_t port[2];
     struct ueid_t id;
     uint16_t lcid;
     LIBLTE_S1AP_RRC_ESTABLISHMENT_CAUSE_ENUM cause;
@@ -143,9 +146,9 @@ public:
   pthread_mutex_t user_mutex;
   pthread_mutex_t paging_mutex;
 
-  void handle_normal(srslte::byte_buffer_t *sdu);
-  void handle_attach(srslte::byte_buffer_t *sdu);
-  void handle_data(srslte::byte_buffer_t *sdu);
+  void handle_normal(rrc_receive_head head, srslte::byte_buffer_t *sdu);
+  void handle_attach(rrc_receive_head head, srslte::byte_buffer_t *sdu);
+  void handle_data(rrc_receive_head head, srslte::byte_buffer_t *sdu);
 
   bool send_normal(rrc_pdu pdu);
   bool send_paging(rrc_pdu pdu);
