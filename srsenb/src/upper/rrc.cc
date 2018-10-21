@@ -95,6 +95,7 @@ void rrc::release_complete(uint16_t rnti) {
 
 bool rrc::setup_ue_ctxt(uint16_t rnti, LIBLTE_S1AP_MESSAGE_INITIALCONTEXTSETUPREQUEST_STRUCT *msg) {
   // TODO add PDU to PDU Queue
+    log_h->console("Setup new ctxt erab for rnti:%d\n", rnti);
     if(rnti_map.count(rnti) != 0) {
         LIBLTE_S1AP_E_RABTOBESETUPLISTCTXTSUREQ_STRUCT *e = &msg->E_RABToBeSetupListCtxtSUReq;
         LIBLTE_S1AP_MESSAGE_INITIALCONTEXTSETUPRESPONSE_STRUCT res;
@@ -121,6 +122,7 @@ bool rrc::setup_ue_ctxt(uint16_t rnti, LIBLTE_S1AP_MESSAGE_INITIALCONTEXTSETUPRE
                 pdu_queue.push(pdu);
             }
             gtpu->add_bearer(rnti, lcid, addr_, teid_out, &teid_in);
+            log_h->console("Add bearer for ctxt, rnti:%d lcid:%d\n", rnti, lcid);
             ///////////////////// for complete
             uint32_t j = res.E_RABSetupListCtxtSURes.len ++;
             res.E_RABSetupListCtxtSURes.buffer[j].ext = false;
@@ -136,6 +138,7 @@ bool rrc::setup_ue_ctxt(uint16_t rnti, LIBLTE_S1AP_MESSAGE_INITIALCONTEXTSETUPRE
         return false;
 }
 bool rrc::setup_ue_erabs(uint16_t rnti, LIBLTE_S1AP_MESSAGE_E_RABSETUPREQUEST_STRUCT *msg) {
+    log_h->console("Setup new ctxt erab for rnti:%d\n", rnti);
     if(rnti_map.count(rnti) != 0) {
         LIBLTE_S1AP_E_RABTOBESETUPLISTBEARERSUREQ_STRUCT *e = &msg->E_RABToBeSetupListBearerSUReq;
         LIBLTE_S1AP_MESSAGE_E_RABSETUPRESPONSE_STRUCT res;
@@ -154,7 +157,8 @@ bool rrc::setup_ue_erabs(uint16_t rnti, LIBLTE_S1AP_MESSAGE_E_RABSETUPREQUEST_ST
             LIBLTE_S1AP_TRANSPORTLAYERADDRESS_STRUCT *addr = &erab->transportLayerAddress;
             uint8_t *bit_ptr = addr->buffer;
             uint32_t addr_ = liblte_bits_2_value(&bit_ptr, addr->n_bits);
-            gtpu->add_bearer(id, lcid, addr_, teid_out, &teid_in);
+            gtpu->add_bearer(rnti, lcid, addr_, teid_out, &teid_in);
+            log_h->console("Add bearer for erab rnti:%d lcid:%d", rnti, lcid);
             LIBLTE_S1AP_NAS_PDU_STRUCT* nas_pdu = &erab->nAS_PDU;
             srslte::byte_buffer_t *sdu = pool->allocate();
             memcpy(sdu->msg, nas_pdu->buffer, nas_pdu->n_octets);
@@ -217,6 +221,10 @@ void rrc::handle_normal(rrc_receive_head head, srslte::byte_buffer_t *sdu) {
 }
 
 void rrc::handle_data(rrc_receive_head head, srslte::byte_buffer_t *sdu) {
+    log_h->console("Receive data len:%d\n", (uint32_t)sdu->N_bytes);
+    for(uint32_t i = 0;i < sdu->N_bytes;i ++)
+        printf("0x%x ",sdu->msg[i]);
+    printf("\n");
     if(ueid_map.count(head.id) == 1) {
         gtpu_pdcp->write_pdu(ueid_map[head.id], head.lcid, sdu);
     }
@@ -325,12 +333,15 @@ void rrc::receive_uplink() {
   // TODO How about static byte_buffer_t?
   srslte::byte_buffer_t *sdu = pool->allocate();
   ssize_t len = read(sock_fd, sdu->msg, SRSLTE_MAX_BUFFER_SIZE_BYTES);
-  printf("Receive Uplink len:%d\n", (uint32_t) len);
+  printf("Receive Uplink len:%d type:0x%x\n", (uint32_t) len, sdu->msg[0]);
   sdu->N_bytes = (uint32_t) len;
   rrc_receive_head head;
   memcpy(&head, sdu->msg, sizeof(rrc_receive_head));
   sdu->msg += RRC_RECEIVE_LEN;
   sdu->N_bytes -= RRC_RECEIVE_LEN;
+  for(uint32_t i = 0;i < sdu->N_bytes;i ++)
+      printf("0x%x ", sdu->msg[i]);
+  printf("\n");
   switch(head.type) {
     case SRSENB_RRC_NORMAL:
       handle_normal(head, sdu);

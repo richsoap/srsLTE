@@ -1,0 +1,16 @@
+--- command='srsue' version=18.6.1 signal=6 date='20/10/2018 15:49:56' ---
+	srsue(+0x6fcea) [0x564470265cea]
+	/lib/x86_64-linux-gnu/libc.so.6(+0x3ef20) [0x7fe9b9c53f20]
+	/lib/x86_64-linux-gnu/libc.so.6(gsignal+0xc7) [0x7fe9b9c53e97]
+	/lib/x86_64-linux-gnu/libc.so.6(abort+0x141) [0x7fe9b9c55801]
+	/lib/x86_64-linux-gnu/libc.so.6(+0x89897) [0x7fe9b9c9e897]
+	/lib/x86_64-linux-gnu/libc.so.6(+0x9090a) [0x7fe9b9ca590a]
+	/lib/x86_64-linux-gnu/libc.so.6(cfree+0x4cc) [0x7fe9b9cace1c]
+	srsue(_ZN5srsue3rrcD1Ev+0x45) [0x56447024d0c5]
+	srsue(_ZN5srsue2ueD1Ev+0x27c) [0x564470238eec]
+	srsue(_ZN5srsue2ueD0Ev+0xe) [0x56447023901e]
+	srsue(_ZN5srsue7ue_base7cleanupEv+0x27) [0x564470237ad7]
+	srsue(main+0x88c) [0x5644702283bc]
+	/lib/x86_64-linux-gnu/libc.so.6(__libc_start_main+0xe7) [0x7fe9b9c36b97]
+	srsue(_start+0x2a) [0x5644702288ca]
+
