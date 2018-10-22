@@ -80,7 +80,7 @@ public:
 
 private:
   static const int THREAD_PRIO = 65;
-  static const int GTPU_PORT   = 2152;
+  static const int GTPU_PORT   = 2153;
   srslte::byte_buffer_pool     *pool;
   bool                         running;
   bool                         run_enable;

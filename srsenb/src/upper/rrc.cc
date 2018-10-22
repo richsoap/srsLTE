@@ -35,16 +35,18 @@ void rrc::init(s1ap_interface_rrc* s1ap_,
       rrc_addr.sin_port = htons(bind_port);
       if(bind(sock_fd, (struct sockaddr*) &rrc_addr, sizeof(rrc_addr)) < 0)
         result = 2;
-      rrc_addr.sin_port = htons(bind_port + 1);
-      if(bind(send_fd, (struct sockaddr*) &rrc_addr, sizeof(rrc_addr)) < 0)
-          result = 2;
+      //rrc_addr.sin_port = htons(bind_port + 1);
+      //if(bind(send_fd, (struct sockaddr*) &rrc_addr, sizeof(rrc_addr)) < 0)
+       //   result = 2;
     }
     switch(result) {
       case 1:
         log_h->error("Invalid socket fd during rrc\n");
+        log_h->console("Invalid socket fd during rrc\n");
         break;
       case 2:
         log_h->error("Bind error in rrc init\n");
+        log_h->console("Bind error in rrc init\n");
         break;
       default:
         log_h->debug("RRC bind to ip%s:%d\n", bind_addr.c_str(), bind_port);
@@ -196,6 +198,7 @@ void rrc::add_paging_id(uint32_t ueid, LIBLTE_S1AP_UEPAGINGID_STRUCT UEPagingID)
 
 void rrc::write_sdu(uint16_t rnti, uint32_t lcid, srslte::byte_buffer_t *pdu) {
     rrc_pdu p = {rnti, lcid, pdu};
+    log_h->console("SDU rnti:%d lcid:%d len:%d\n", rnti, lcid, pdu->N_bytes);
     pdu_queue.push(p);
 }
 
@@ -242,7 +245,7 @@ void rrc::handle_attach(rrc_receive_head head, srslte::byte_buffer_t *sdu) {
     printf("add %s:%d\n", inet_ntoa(ue_addr_in.sin_addr), ue_addr_in.sin_port);
     for(uint16_t rnti = 1;rnti < 0xFFFF;rnti ++) {
         if(rnti_map.count(rnti) == 0) {
-            printf("Send initial_ue\n");
+            //printf("Send initial_ue\n");
             rnti_map[rnti] = head.id;
             ueid_map[head.id] = rnti;
             addr_map[rnti] = ue_addr_in;
@@ -333,7 +336,7 @@ void rrc::receive_uplink() {
   // TODO How about static byte_buffer_t?
   srslte::byte_buffer_t *sdu = pool->allocate();
   ssize_t len = read(sock_fd, sdu->msg, SRSLTE_MAX_BUFFER_SIZE_BYTES);
-  printf("Receive Uplink len:%d type:0x%x\n", (uint32_t) len, sdu->msg[0]);
+  log_h->debug("Receive Uplink len:%d type:0x%x\n", (uint32_t) len, sdu->msg[0]);
   sdu->N_bytes = (uint32_t) len;
   rrc_receive_head head;
   memcpy(&head, sdu->msg, sizeof(rrc_receive_head));
@@ -359,6 +362,7 @@ void rrc::receive_uplink() {
       break;
     case SRSENB_RRC_DATA:
       handle_data(head, sdu);
+      break;
     default:
       log_h->warning("Unkown PDU Type 0x%x\n", sdu->msg[0]);
   }

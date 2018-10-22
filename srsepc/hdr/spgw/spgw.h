@@ -45,7 +45,7 @@ namespace srsepc{
 
 class mme_gtpc;
 
-const uint16_t GTPU_RX_PORT = 2152;
+const uint16_t GTPU_RX_PORT = 2153;
 
 typedef struct {
   std::string gtpu_bind_addr;

@@ -303,10 +303,10 @@ spgw::run_thread()
       {
         msg->N_bytes = recvfrom(m_s1u, msg->msg, SRSLTE_MAX_BUFFER_SIZE_BYTES, 0, &src_addr, &addrlen );
         handle_s1u_pdu(msg);
-      }
+      /*}
       if (FD_ISSET(m_sgi_if, &set))
       {
-        msg->N_bytes = read(sgi, msg->msg, SRSLTE_MAX_BUFFER_SIZE_BYTES);
+        msg->N_bytes = read(sgi, msg->msg, SRSLTE_MAX_BUFFER_SIZE_BYTES);*/
         handle_sgi_pdu(msg);
       }
     }
@@ -330,6 +330,10 @@ spgw::handle_sgi_pdu(srslte::byte_buffer_t *msg)
   srslte::gtpc_f_teid_ie enb_fteid;
 
   struct iphdr *iph = (struct iphdr *) msg->msg;
+  printf("SGI_:");
+  for(uint32_t i = 0;i < msg->N_bytes;i ++)
+      printf("0x%x ", msg->msg[i]);
+  printf("\n");
   if(iph->version != 4)
   {
     m_spgw_log->warning("IPv6 not supported yet.\n");
@@ -352,14 +356,14 @@ spgw::handle_sgi_pdu(srslte::byte_buffer_t *msg)
 
   if(ip_found == false)
   {
-    //m_spgw_log->console("IP Packet is not for any UE\n");
+    m_spgw_log->console("IP Packet is not for any UE\n");
     return;
   }
   struct sockaddr_in enb_addr;
   enb_addr.sin_family = AF_INET;
   enb_addr.sin_port = htons(GTPU_RX_PORT);
   enb_addr.sin_addr.s_addr = enb_fteid.ipv4;
-  //m_spgw_log->console("UE F-TEID found, TEID 0x%x, eNB IP %s\n", enb_fteid.teid, inet_ntoa(enb_addr.sin_addr));
+  m_spgw_log->console("UE F-TEID found, TEID 0x%x, eNB IP %s\n", enb_fteid.teid, inet_ntoa(enb_addr.sin_addr));
 
   //Setup GTP-U header
   srslte::gtpu_header_t header;
@@ -397,7 +401,7 @@ spgw::handle_s1u_pdu(srslte::byte_buffer_t *msg)
   srslte::gtpu_header_t header;
   srslte::gtpu_read_header(msg, &header, m_spgw_log);
  
-  //m_spgw_log->console("TEID 0x%x. Bytes=%d\n", header.teid, msg->N_bytes);
+  /*m_spgw_log->console("TEID 0x%x. Bytes=%d\n", header.teid, msg->N_bytes);
   int n = write(m_sgi_if, msg->msg, msg->N_bytes);
   if(n<0)
   {
@@ -406,7 +410,7 @@ spgw::handle_s1u_pdu(srslte::byte_buffer_t *msg)
   else
   {
     //m_spgw_log->console("Forwarded packet to TUN interface. Bytes= %d/%d\n", n, msg->N_bytes);
-  }
+  }*/
   return;
 }
 
