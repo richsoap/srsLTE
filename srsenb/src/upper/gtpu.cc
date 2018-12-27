@@ -76,12 +76,12 @@ bool gtpu::init(std::string gtp_bind_addr_, std::string mme_addr_, srsenb::pdcp_
     return false;
   }
 #if defined (SO_REUSEADDR)
-  //if (setsockopt(src_fd, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(int)) < 0)
-  //    gtpu_log->error("setsockopt(SO_REUSEADDR) failed\n");
+  if (setsockopt(src_fd, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(int)) < 0)
+      gtpu_log->error("setsockopt(SO_REUSEADDR) failed\n");
 #endif
 #if defined (SO_REUSEPORT)
-  //if (setsockopt(src_fd, SOL_SOCKET, SO_REUSEPORT, &enable, sizeof(int)) < 0)
-  //    gtpu_log->error("setsockopt(SO_REUSEPORT) failed\n");
+  if (setsockopt(src_fd, SOL_SOCKET, SO_REUSEPORT, &enable, sizeof(int)) < 0)
+      gtpu_log->error("setsockopt(SO_REUSEPORT) failed\n");
 #endif
 
   struct sockaddr_in bindaddr;

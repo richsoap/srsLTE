@@ -336,8 +336,12 @@ void rrc::receive_uplink() {
   // TODO How about static byte_buffer_t?
   srslte::byte_buffer_t *sdu = pool->allocate();
   ssize_t len = read(sock_fd, sdu->msg, SRSLTE_MAX_BUFFER_SIZE_BYTES);
-  log_h->debug("Receive Uplink len:%d type:0x%x\n", (uint32_t) len, sdu->msg[0]);
   sdu->N_bytes = (uint32_t) len;
+  log_h->debug("Receive Uplink len:%d type:0x%x\n", (uint32_t) len, sdu->msg[0]);
+  log_h->console("Receive Uplink len:%d type:0x%x\n", (uint32_t) len, sdu->msg[0]);
+  for(int i = 0;i < len;i ++) 
+printf("0x%x ", sdu->msg[i]);
+printf("\n");
   rrc_receive_head head;
   memcpy(&head, sdu->msg, sizeof(rrc_receive_head));
   sdu->msg += RRC_RECEIVE_LEN;
